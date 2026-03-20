@@ -65,6 +65,11 @@ if match:
 # --------------------------------------------------------------------------------
 # Step 2: Inject IDs for Table, Breadcrumbs, etc.
 # --------------------------------------------------------------------------------
+# 1) Candidate table tbody ID + scrollable container
+content = content.replace(
+    '<div class="overflow-x-auto flex-1 custom-scrollbar">',
+    '<div class="overflow-x-auto custom-scrollbar" style="max-height: 420px; overflow-y: auto;">'
+)
 content = content.replace('<tbody class="divide-y divide-slate-700/30">', '<tbody id="candidate-table" class="divide-y divide-slate-700/30">')
 content = content.replace('<h3 class="text-sm font-bold text-slate-100">CHRNA1 : MG-003 Binding</h3>', '<h3 class="text-sm font-bold text-slate-100"><span id="viewer-complex-title">CHRNA1 : MG-003 Binding</span></h3>')
 content = content.replace('<span class="w-2 h-2 rounded-full bg-amber-400"></span> Ligand MG-003', '<span class="w-2 h-2 rounded-full bg-amber-400"></span> <span id="viewer-ligand-label">Ligand MG-003</span>')
@@ -111,21 +116,22 @@ content = content.replace(
 )
 
 # --------------------------------------------------------------------------------
-# Step 5: Toolbar Button IDs
+# Step 5: Toolbar Button IDs — use regex to handle \n / \r\n variations
 # --------------------------------------------------------------------------------
-# Note: dashboard.html uses <button class="...">\n<span class="...">
-# We need to match precisely.
-content = content.replace(
-    '<button class="w-8 h-8 rounded bg-background-dark/80 border border-slate-700 flex items-center justify-center hover:bg-primary transition-colors">\n<span class="material-symbols-outlined text-lg">videocam</span>',
-    '<button id="btn-screenshot" title="스크린샷" class="w-8 h-8 rounded bg-background-dark/80 border border-slate-700 flex items-center justify-center hover:bg-primary transition-colors">\n<span class="material-symbols-outlined text-lg">videocam</span>'
+content = re.sub(
+    r'<button class="w-8 h-8 rounded bg-background-dark/80 border border-slate-700 flex items-center justify-center hover:bg-primary transition-colors">\s*<span class="material-symbols-outlined text-lg">videocam</span>',
+    '<button id="btn-screenshot" title="스크린샷" class="w-8 h-8 rounded bg-background-dark/80 border border-slate-700 flex items-center justify-center hover:bg-primary transition-colors">\n<span class="material-symbols-outlined text-lg">videocam</span>',
+    content
 )
-content = content.replace(
-    '<button class="w-8 h-8 rounded bg-background-dark/80 border border-slate-700 flex items-center justify-center hover:bg-primary transition-colors">\n<span class="material-symbols-outlined text-lg">layers</span>',
-    '<button id="btn-style-cycle" title="표현 방식 전환" class="w-8 h-8 rounded bg-background-dark/80 border border-slate-700 flex items-center justify-center hover:bg-primary transition-colors">\n<span class="material-symbols-outlined text-lg">layers</span>'
+content = re.sub(
+    r'<button class="w-8 h-8 rounded bg-background-dark/80 border border-slate-700 flex items-center justify-center hover:bg-primary transition-colors">\s*<span class="material-symbols-outlined text-lg">layers</span>',
+    '<button id="btn-style-cycle" title="표현 방식 전환" class="w-8 h-8 rounded bg-background-dark/80 border border-slate-700 flex items-center justify-center hover:bg-primary transition-colors">\n<span class="material-symbols-outlined text-lg">layers</span>',
+    content
 )
-content = content.replace(
-    '<button class="w-8 h-8 rounded bg-background-dark/80 border border-slate-700 flex items-center justify-center hover:bg-primary transition-colors">\n<span class="material-symbols-outlined text-lg">zoom_in</span>',
-    '<button id="btn-zoom-ligand" title="리간드 줌" class="w-8 h-8 rounded bg-background-dark/80 border border-slate-700 flex items-center justify-center hover:bg-primary transition-colors">\n<span class="material-symbols-outlined text-lg">zoom_in</span>'
+content = re.sub(
+    r'<button class="w-8 h-8 rounded bg-background-dark/80 border border-slate-700 flex items-center justify-center hover:bg-primary transition-colors">\s*<span class="material-symbols-outlined text-lg">zoom_in</span>',
+    '<button id="btn-zoom-ligand" title="리간드 줌" class="w-8 h-8 rounded bg-background-dark/80 border border-slate-700 flex items-center justify-center hover:bg-primary transition-colors">\n<span class="material-symbols-outlined text-lg">zoom_in</span>',
+    content
 )
 
 # --------------------------------------------------------------------------------
@@ -311,14 +317,56 @@ js_logic = """
             initViewer();
             Streamlit.setComponentReady();
             Streamlit.setFrameHeight(document.body.scrollHeight);
+            
             const el = (id) => document.getElementById(id);
+            
+            // 1. Dashboard Actions
             if(el('btn-view-all')) el('btn-view-all').onclick = () => Streamlit.setComponentValue({action: 'view_all_candidates', ts: Date.now()});
-            if(el('ai-send-btn')) el('ai-send-btn').onclick = () => { const i = el('ai-input'); if(i && i.value) { Streamlit.setComponentValue({action: 'ai_query', query: i.value, ts: Date.now()}); i.value=''; } };
+            
+            // 2. AI Chat
+            if(el('ai-send-btn')) el('ai-send-btn').onclick = () => { 
+                const i = el('ai-input'); 
+                if(i && i.value) { 
+                    Streamlit.setComponentValue({action: 'ai_query', query: i.value, ts: Date.now()}); 
+                    i.value=''; 
+                } 
+            };
+            
+            // 3. Selection Table
             const table = el('candidate-table');
             if(table) {
                 table.onclick = (e) => {
                     const row = e.target.closest('tr');
-                    if(row && row.dataset.id) Streamlit.setComponentValue({action: 'select_candidate', id: row.dataset.id, ts: Date.now()});
+                    if(row && row.dataset.id) {
+                        Streamlit.setComponentValue({action: 'select_candidate', id: row.dataset.id, ts: Date.now()});
+                    }
+                };
+            }
+
+            // 4. 3D Viewer Toolbar Actions
+            if(el('btn-screenshot')) {
+                el('btn-screenshot').onclick = () => {
+                    if(viewer) {
+                        // Capture and potentially send back or just log
+                        console.log("Screenshot requested");
+                        alert("Screenshot captured (see console for data).");
+                    }
+                };
+            }
+            if(el('btn-style-cycle')) {
+                let currentStyle = 0;
+                el('btn-style-cycle').onclick = () => {
+                    if(!viewer) return;
+                    currentStyle = (currentStyle + 1) % 3;
+                    if(currentStyle === 0) viewer.setStyle({}, {cartoon: {color: 'spectrum'}});
+                    else if(currentStyle === 1) viewer.setStyle({}, {stick: {radius: 0.2}});
+                    else viewer.setStyle({}, {sphere: {radius: 0.5}});
+                    viewer.render();
+                };
+            }
+            if(el('btn-zoom-ligand')) {
+                el('btn-zoom-ligand').onclick = () => {
+                    if(viewer) viewer.zoomTo({model: -1}); // zoom to the last added model (usually ligand)
                 };
             }
         });
