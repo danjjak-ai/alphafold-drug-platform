@@ -1,6 +1,9 @@
 <div align="center">
 
+<img src="https://github.com/danjjak-ai/alphafold-drug-platform/blob/master/%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%BC%E3%83%B3%E3%82%B7%E3%83%A7%E3%83%83%E3%83%88%202026-03-20%20151436.png" alt="screenImage"/>
+
 <img src="https://img.shields.io/badge/-%F0%9F%A7%AC%20RareTarget%20Discovery-1D9E75?style=for-the-badge&labelColor=085041" alt="RareTarget Discovery"/>
+
 
 ### AI-Powered Drug Repurposing for Rare Neuromuscular Disease
 
