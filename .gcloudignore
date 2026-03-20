@@ -15,11 +15,25 @@ __pycache__/
 *.pyo
 *.pyd
 
-# 데이터 및 모델 (용량이 크고 로컬 전용인 경우)
-data/
-models/
-results/
-vina_bin/
+# 데이터 및 모델 (용량이 너무 큰 파일만 제외하고 나머지는 허용)
+# data/
+# results/
+# vina_bin/
+
+# 구체적인 대용량 파일만 제외
+models/*.pkl
+models/*.pt
+models/*.pth
+data/processed/
+results/docking/*
+!results/docking/chrna1_CHEMBL21333_out.pdbqt
+!results/docking/chrna1_CHEMBL1200640_out.pdbqt
+!results/docking/chrna1_CHEMBL941_out.pdbqt
+!results/docking/chrna1_CHEMBL2105762_out.pdbqt
+!results/docking/chrna1_CHEMBL1201131_out.pdbqt
+!results/docking/.gitkeep
+!data/structures/targets/7ql6_raw.pdb
+!data/structures/targets/8s9p_raw.pdb
 
 # 로컬 설정
 .env
