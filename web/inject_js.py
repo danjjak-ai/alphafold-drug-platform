@@ -77,6 +77,33 @@ content = content.replace('View All Candidates', '<span id="btn-view-all" style=
 content = content.replace('id="ai-chat-output"', 'id="ai-chat-output-original"') # Avoid conflict if any
 content = content.replace('<div class="flex-1 p-4 overflow-y-auto custom-scrollbar flex flex-col gap-4 text-sm">', '<div id="ai-chat-output" class="flex-1 p-4 overflow-y-auto custom-scrollbar flex flex-col gap-4 text-sm">')
 
+# 2) Navigation Menu IDs + onclick
+content = content.replace('href="#">Dashboard</a>', 'id="nav-dashboard" href="javascript:showPage(\'dashboard\')">Dashboard</a>')
+content = content.replace('href="#">Molecular Dynamics</a>', 'id="nav-dynamics" href="javascript:showPage(\'dynamics\')">Molecular Dynamics</a>')
+content = content.replace('href="#">Library</a>', 'id="nav-library" href="javascript:showPage(\'library\')">Library</a>')
+content = content.replace('href="#">Simulations</a>', 'id="nav-simulations" href="javascript:showPage(\'simulations\')">Simulations</a>')
+
+# 3) Body Skeleton Pages (Dynamics, Library, Simulations)
+skeleton_pages = """
+<div id="page-dynamics" class="flex-1 hidden flex-col items-center justify-center p-20 text-slate-300">
+    <span class="material-symbols-outlined text-8xl text-primary opacity-20 mb-4">timeline</span>
+    <h2 class="text-2xl font-bold">Molecular Dynamics Analysis</h2>
+    <p class="text-slate-500 mt-2">Computing trajectories and binding free energy surfaces... (Coming Soon)</p>
+</div>
+<div id="page-library" class="flex-1 hidden flex-col items-center justify-center p-20 text-slate-300">
+    <span class="material-symbols-outlined text-8xl text-indigo-400 opacity-20 mb-4">folder_special</span>
+    <h2 class="text-2xl font-bold">Compound Library</h2>
+    <p class="text-slate-500 mt-2">Managing 4,410+ results and external lead series... (Coming Soon)</p>
+</div>
+<div id="page-simulations" class="flex-1 hidden flex-col items-center justify-center p-20 text-slate-300">
+    <span class="material-symbols-outlined text-8xl text-amber-400 opacity-20 mb-4">model_training</span>
+    <h2 class="text-2xl font-bold">Simulations & Assays</h2>
+    <p class="text-slate-500 mt-2">Real-time binding kinetic simulations and virtual assays... (Coming Soon)</p>
+</div>
+"""
+content = content.replace("</header>", "</header>" + skeleton_pages)
+
+
 # --------------------------------------------------------------------------------
 # Step 3: Replace 3D Viewer Placeholder + Controls
 # --------------------------------------------------------------------------------
@@ -343,36 +370,41 @@ js_logic = """
                 };
             }
 
-            // 4. 3D Viewer Toolbar Actions
+            // 4. Handle Incoming Streamlit Render
+            window.addEventListener('message', (event) => {
+                const data = event.data;
+                if (data.isStreamlitMessage && data.type === 'streamlit:render') {
+                    Streamlit.onRender(data.args);
+                }
+            });
+
+            // 5. Tooltip/Toolbar Handlers (Inside scope of viewer)
             if(el('btn-screenshot')) {
-                el('btn-screenshot').onclick = () => {
-                    if(viewer) {
-                        // Capture and potentially send back or just log
-                        console.log("Screenshot requested");
-                        alert("Screenshot captured (see console for data).");
-                    }
-                };
+                el('btn-screenshot').onclick = () => { if(viewer) alert("Screenshot mode enabled. Use browser shortcut for now."); };
             }
             if(el('btn-style-cycle')) {
-                let currentStyle = 0;
+                let sIdx = 0;
                 el('btn-style-cycle').onclick = () => {
                     if(!viewer) return;
-                    currentStyle = (currentStyle + 1) % 3;
-                    if(currentStyle === 0) viewer.setStyle({}, {cartoon: {color: 'spectrum'}});
-                    else if(currentStyle === 1) viewer.setStyle({}, {stick: {radius: 0.2}});
+                    sIdx = (sIdx + 1) % 3;
+                    if(sIdx === 0) viewer.setStyle({}, {cartoon: {color: 'spectrum'}});
+                    else if(sIdx === 1) viewer.setStyle({}, {stick: {radius: 0.2}});
                     else viewer.setStyle({}, {sphere: {radius: 0.5}});
                     viewer.render();
                 };
             }
             if(el('btn-zoom-ligand')) {
-                el('btn-zoom-ligand').onclick = () => {
-                    if(viewer) viewer.zoomTo({model: -1}); // zoom to the last added model (usually ligand)
-                };
+                el('btn-zoom-ligand').onclick = () => { if(viewer) viewer.zoomTo({model: -1}); };
             }
+
+            initViewer();
+            Streamlit.setComponentReady();
+            Streamlit.setFrameHeight(document.body.scrollHeight);
         });
     })();
 </script>
 """
+content = re.sub(r'</body>\s*<script>.*?</script>\s*</body>', '</body>', content, flags=re.DOTALL) # Clear my previous messy injection if any
 content = content.replace("</body>", js_logic + "</body>")
 
 # Final fix for profile avatar link if broken
