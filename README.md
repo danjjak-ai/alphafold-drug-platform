@@ -572,3 +572,59 @@ git push origin feature/your-feature-name
 *한국어 · English · 日本語*
 
 </div>
+
+---
+
+# 🚀 AlphaFold Drug Platform - Quick Start
+
+## 📦 빠른 시작 (Quick Start)
+
+### 1. 환경 설정
+
+```bash
+# 1) 저장소 클론
+git clone https://github.com/danjjak-ai/alphafold-drug-platform.git
+cd alphafold-drug-platform
+
+# 2) uv로 가상환경 생성 및 패키지 설치
+uv venv .venv
+uv pip install -r requirements.txt
+```
+
+### 2. AutoDock Vina 설치 (OS별)
+
+> **중요**: AutoDock Vina 바이너리는 OS에 따라 별도로 준비해야 합니다.
+
+| OS | 바이너리 위치 | 다운로드 |
+|---|---|---|
+| **Windows** | `scripts/vina.exe` | ✅ Git에 포함 (별도 설치 불필요) |
+| **Linux** | `vina_bin/linux/vina` | ⬇️아래 안내 참고 |
+| **macOS** | `vina_bin/mac/vina` | ⬇️아래 안내 참고 |
+
+#### Linux 설치
+```bash
+wget https://github.com/ccsb-scripps/AutoDock-Vina/releases/download/v1.2.5/vina_1.2.5_linux_x86_64 -O vina_bin/linux/vina
+chmod +x vina_bin/linux/vina
+```
+
+#### macOS 설치
+```bash
+curl -L https://github.com/ccsb-scripps/AutoDock-Vina/releases/download/v1.2.5/vina_1.2.5_mac_x86_64 -o vina_bin/mac/vina
+chmod +x vina_bin/mac/vina
+```
+
+---
+
+## 🖥️ 서비스 기동
+
+### 데이터 파이프라인 실행 (최초 1회)
+
+**Windows:** `run_pipeline.bat`  
+**Linux / macOS:** `chmod +x run_pipeline.sh && ./run_pipeline.sh`
+
+### 대시보드 기동
+
+**Windows:** `start_dashboard.bat`  
+**Linux / macOS:** `chmod +x start_dashboard.sh && ./start_dashboard.sh`
+
+접속 URL: **http://localhost:8501**

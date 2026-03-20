@@ -1,0 +1,6 @@
+This directory is a placeholder for the Windows version of AutoDock Vina.
+
+The Windows Vina executable is bundled at:
+  scripts/vina.exe
+
+This directory exists for structural consistency with linux/ and mac/.

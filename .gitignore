@@ -1,0 +1,101 @@
+# AlphaFold Drug Platform - .gitignore
+
+# ─── Python ──────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ─── 가상환경 ─────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ─── 환경변수 파일 ────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─── 학습된 모델 파일 (크기 큼) ──────────────────
+# Git LFS 사용 권장: git lfs track "models/*.pkl"
+models/*.pkl
+models/*.pt
+models/*.pth
+models/*.h5
+models/*.ckpt
+
+# ─── 데이터베이스 (런타임 생성) ──────────────────
+data/mg_discovery.db
+data/mg_discovery.db-shm
+data/mg_discovery.db-wal
+*.db
+*.sqlite
+*.sqlite3
+
+# ─── 구조 데이터 파일 (크기 큼 / 다운로드 가능) ──
+data/structures/targets/
+data/structures/ligands/
+data/processed/
+
+# ─── 도킹 시뮬레이션 결과 (크기 큼) ─────────────
+results/docking/
+results/top_candidates.csv
+
+# ─── Jupyter Notebook ────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ─── IDE / Editor ────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ─── OS 특정 파일 ────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+desktop.ini
+$RECYCLE.BIN/
+
+# ─── 로그 파일 ───────────────────────────────────
+*.log
+logs/
+
+# ─── 임시 파일 ───────────────────────────────────
+tmp/
+temp/
+*.tmp
+*.bak
+
+# ─── Streamlit ───────────────────────────────────
+.streamlit/secrets.toml
+
+# ─── vina_bin 바이너리 (플레이스홀더 제외 후 실제 바이너리만 무시) ──
+vina_bin/windows/vina.exe
+vina_bin/linux/vina
+vina_bin/mac/vina
+# .gitkeep 파일은 추적 유지 (예외 처리)
+!vina_bin/windows/.gitkeep
+!vina_bin/linux/.gitkeep
+!vina_bin/mac/.gitkeep
+
+# ─── scripts/vina.exe (Windows용 - Git에 포함) ──
+# scripts/vina.exe 는 의도적으로 포함합니다.
+# (Windows 기본 실행 파일 - 팀 내 공유용)
+
+# ─── stitch_assets (디자인 에셋 - 선택적 포함) ──
+# 필요한 경우 아래 주석 해제:
+# stitch_assets/

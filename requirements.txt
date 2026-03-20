@@ -24,3 +24,4 @@ ipykernel
 tqdm
 pydantic
 python-dotenv
+chembl_webresource_client

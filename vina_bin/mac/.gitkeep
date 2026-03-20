@@ -1,0 +1,6 @@
+This directory is a placeholder for the macOS version of AutoDock Vina.
+
+Place the macOS Vina binary here:
+  vina_bin/mac/vina
+
+See README.md for download instructions.

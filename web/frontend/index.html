@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#259df4",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101a22",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(34, 57, 73, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(49, 81, 104, 0.5);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #315168; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col overflow-hidden">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 px-6 py-3 bg-background-light dark:bg-background-dark z-50">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3 text-primary">
+<span class="material-symbols-outlined text-3xl">biotech</span>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight">MG Discovery Core</h2>
+</div>
+<label class="flex flex-col min-w-40 h-10 max-w-64">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full bg-slate-100 dark:bg-slate-800/50">
+<div class="text-slate-500 flex items-center justify-center pl-4">
+<span class="material-symbols-outlined text-xl">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 border-none bg-transparent focus:ring-0 text-sm placeholder:text-slate-500" placeholder="Search molecules, targets, or papers..." value=""/>
+</div>
+</label>
+</div>
+<div class="flex flex-1 justify-end gap-6 items-center">
+<nav class="hidden md:flex items-center gap-6">
+<a id="nav-dashboard" class="text-primary text-sm font-semibold" href="#" onclick="showPage('dashboard');return false;">Dashboard</a>
+<a id="nav-dynamics" class="text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" href="#" onclick="showPage('dynamics');return false;">Molecular Dynamics</a>
+<a id="nav-library" class="text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" href="#" onclick="showPage('library');return false;">Library</a>
+<a id="nav-simulations" class="text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" href="#" onclick="showPage('simulations');return false;">Simulations</a>
+</nav>
+<div class="flex gap-2">
+<button class="flex items-center justify-center rounded-lg h-10 w-10 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="flex items-center justify-center rounded-lg h-10 w-10 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-all">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<div class="h-10 w-10 rounded-full border-2 border-primary/30 p-0.5">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-full w-full" data-alt="Researcher Profile Avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCT6LHa9AgeEetnp3Zt67tCU1oGSfzIXcJgXdLuJYukjHoFqgF-j-WsmdctuXYEsoTPs6OZY6MftI5bHif6NrLbe37R60j5VayKcrsLcANTchRKx5yxBQ069r9DdAXm2JzloJHghKVpkr3hOjI_u6tfYb6dSuA27tRwFtcxhNnc6hzVBC9xOFYfX1BPHq9Z-LlPAkkMGiuWkXlyTw1yvoFcrbN9y9ct7VK9Z51sNeLx9vEAWuN86w40FvrZa1LdxzVW4ZGTYNjWzuk");'></div>
+</div>
+</div>
+</header>
+<main class="flex-1 flex overflow-hidden p-4 gap-4">
+<!-- Left Column: Targeting & Screening -->
+<section class="w-1/4 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
+<!-- Target Status Cards -->
+<div class="flex flex-col gap-3">
+<h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 px-1">Target Research Status</h3>
+<div class="glass-panel rounded-xl p-4 flex flex-col gap-2">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-sm font-semibold text-slate-100">CHRNA1</p>
+<p class="text-[10px] text-slate-400">AChR alpha subunit</p>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] bg-green-500/20 text-green-400 font-bold">ACTIVE</span>
+</div>
+<div class="flex items-end justify-between mt-2">
+<div class="text-2xl font-bold text-primary">94.2<span class="text-xs font-normal text-slate-500 ml-1">Score</span></div>
+<div class="text-[10px] text-green-400 flex items-center gap-0.5">
+<span class="material-symbols-outlined text-xs">trending_up</span>+2.1%
+                        </div>
+</div>
+<div class="w-full bg-slate-700/50 h-1.5 rounded-full mt-1">
+<div class="bg-primary h-full rounded-full" style="width: 94.2%"></div>
+</div>
+</div>
+<div class="glass-panel rounded-xl p-4 flex flex-col gap-2">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-sm font-semibold text-slate-100">MuSK</p>
+<p class="text-[10px] text-slate-400">Muscle-Specific Kinase</p>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-400 font-bold">SCREENING</span>
+</div>
+<div class="flex items-end justify-between mt-2">
+<div class="text-2xl font-bold text-slate-300">68.5<span class="text-xs font-normal text-slate-500 ml-1">Score</span></div>
+<div class="text-[10px] text-slate-400">Stable</div>
+</div>
+<div class="w-full bg-slate-700/50 h-1.5 rounded-full mt-1">
+<div class="bg-slate-500 h-full rounded-full" style="width: 68.5%"></div>
+</div>
+</div>
+</div>
+<!-- Priority Drug List Table -->
+<div class="glass-panel rounded-xl flex-1 flex flex-col overflow-hidden">
+<div class="p-4 border-b border-slate-700/50 flex justify-between items-center">
+<h3 class="text-sm font-bold text-slate-100">Priority Candidates</h3>
+<span class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-primary transition-colors">filter_list</span>
+</div>
+<div class="overflow-x-auto flex-1 custom-scrollbar">
+<table class="w-full text-left border-collapse">
+<thead class="sticky top-0 bg-slate-800/80 backdrop-blur-sm z-10">
+<tr class="text-[10px] uppercase tracking-tighter text-slate-400 border-b border-slate-700/50">
+<th class="px-4 py-3 font-medium">Drug ID</th>
+<th class="px-4 py-3 font-medium">Affinity</th>
+<th class="px-4 py-3 font-medium">Score</th>
+<th class="px-4 py-3 font-medium">Mech</th>
+</tr>
+</thead>
+<tbody id="candidate-table" class="divide-y divide-slate-700/30">
+<tr class="bg-primary/5 border-l-2 border-primary">
+<td class="px-4 py-4 text-xs font-mono text-primary font-bold">MG-003</td>
+<td class="px-4 py-4 text-xs text-slate-300">-10.1</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2">
+<div class="w-12 h-1 bg-slate-700 rounded-full overflow-hidden">
+<div class="bg-primary h-full" style="width: 92%"></div>
+</div>
+<span class="text-[10px] font-bold text-slate-100">92</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<span class="text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded">Agonist</span>
+</td>
+</tr>
+<tr>
+<td class="px-4 py-4 text-xs font-mono text-slate-300">MG-001</td>
+<td class="px-4 py-4 text-xs text-slate-400">-9.4</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2">
+<div class="w-12 h-1 bg-slate-700 rounded-full overflow-hidden">
+<div class="bg-primary h-full" style="width: 88%"></div>
+</div>
+<span class="text-[10px] font-bold text-slate-300">88</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<span class="text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded">Agonist</span>
+</td>
+</tr>
+<tr>
+<td class="px-4 py-4 text-xs font-mono text-slate-300">MG-002</td>
+<td class="px-4 py-4 text-xs text-slate-400">-8.2</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2">
+<div class="w-12 h-1 bg-slate-700 rounded-full overflow-hidden">
+<div class="bg-primary h-full" style="width: 74%"></div>
+</div>
+<span class="text-[10px] font-bold text-slate-300">74</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<span class="text-[10px] text-slate-400 bg-slate-700 px-1.5 py-0.5 rounded">Antag.</span>
+</td>
+</tr>
+<tr>
+<td class="px-4 py-4 text-xs font-mono text-slate-300">MG-008</td>
+<td class="px-4 py-4 text-xs text-slate-400">-7.9</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2">
+<div class="w-12 h-1 bg-slate-700 rounded-full overflow-hidden">
+<div class="bg-primary h-full" style="width: 65%"></div>
+</div>
+<span class="text-[10px] font-bold text-slate-300">65</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<span class="text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded">Agonist</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-3 border-t border-slate-700/50 flex justify-center">
+<button class="text-[10px] text-slate-400 hover:text-primary transition-colors uppercase font-bold tracking-widest"><span id="btn-view-all" style="cursor:pointer">View All Candidates</span></button>
+</div>
+</div>
+</section>
+<!-- Center Column: 3D Molecular Analysis -->
+<section class="flex-1 flex flex-col gap-4">
+<!-- 3D Mol Viewer -->
+<div class="glass-panel rounded-xl flex-1 relative overflow-hidden group">
+<div class="absolute top-4 left-4 z-10 flex flex-col gap-2">
+<div class="bg-background-dark/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700">
+<p class="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">Current Complex</p>
+<p class="text-sm font-bold text-white"><span id="viewer-complex-title">CHRNA1 : MG-003 Binding</span></p>
+</div>
+<div class="flex gap-2">
+<div class="bg-slate-800/80 backdrop-blur-md px-2 py-1 rounded border border-slate-700 text-[10px] text-slate-300 flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-primary"></span> Alpha Subunit
+                        </div>
+<div class="bg-slate-800/80 backdrop-blur-md px-2 py-1 rounded border border-slate-700 text-[10px] text-slate-300 flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-amber-400"></span> <span id="viewer-ligand-label">Ligand MG-003</span>
+                        </div>
+</div>
+</div>
+<div class="absolute top-4 right-4 z-10 flex flex-col gap-2">
+<button id="btn-screenshot" title="스크린샷" class="w-8 h-8 rounded bg-background-dark/80 border border-slate-700 flex items-center justify-center hover:bg-primary transition-colors">
+<span class="material-symbols-outlined text-lg">videocam</span>
+</button>
+<button id="btn-style-cycle" title="표현 방식 전환" class="w-8 h-8 rounded bg-background-dark/80 border border-slate-700 flex items-center justify-center hover:bg-primary transition-colors">
+<span class="material-symbols-outlined text-lg">layers</span>
+</button>
+<button id="btn-zoom-ligand" title="리간드 줌" class="w-8 h-8 rounded bg-background-dark/80 border border-slate-700 flex items-center justify-center hover:bg-primary transition-colors">
+<span class="material-symbols-outlined text-lg">zoom_in</span>
+</button>
+</div>
+<!-- Simulation/3D Rendering Placeholder -->
+<div id="3dmol-viewer" class="w-full h-full bg-slate-900" style="position: relative; min-height: 400px;"></div>
+<div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-background-dark/60 backdrop-blur-xl px-6 py-3 rounded-full border border-primary/20">
+<span id="btn-skip-prev" class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-primary">skip_previous</span>
+<span id="btn-play-pause" class="material-symbols-outlined text-3xl text-primary cursor-pointer hover:scale-110 transition-transform">play_circle</span>
+<span id="btn-skip-next" class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-primary">skip_next</span>
+<div class="h-4 w-[1px] bg-slate-700"></div>
+<span id="player-time" class="text-xs font-mono text-slate-300 tracking-widest">TIME: 0.0ns</span>
+</div>
+</div>
+</div>
+<!-- RMSD Analysis Chart -->
+<div class="glass-panel rounded-xl h-48 p-4 flex flex-col">
+<div class="flex justify-between items-center mb-4">
+<h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">RMSD Analysis (Molecular Dynamics)</h3>
+<div class="flex gap-4">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="text-[10px] text-slate-300">Backbone</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-amber-400"></span>
+<span class="text-[10px] text-slate-300">Ligand</span>
+</div>
+</div>
+</div>
+<div class="flex-1 w-full flex items-end gap-1 px-2 relative">
+<!-- Simple SVG line chart simulation -->
+<svg class="absolute inset-0 w-full h-full p-2 overflow-visible" preserveaspectratio="none">
+<path id="rmsd-backbone-path" d="M0 80 Q 50 70, 100 85 T 200 60 T 300 75 T 400 50 T 500 65 T 600 40" fill="none" stroke="#259df4" stroke-width="2"></path>
+<path id="rmsd-ligand-path" d="M0 90 Q 50 95, 100 88 T 200 92 T 300 85 T 400 88 T 500 82 T 600 85" fill="none" stroke="#fbbf24" stroke-width="2"></path>
+</svg>
+<div class="absolute bottom-0 left-0 w-full flex justify-between px-2 text-[8px] text-slate-500 font-mono">
+<span>0ns</span>
+<span>10ns</span>
+<span>20ns</span>
+<span>30ns</span>
+<span>40ns</span>
+<span>50ns</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Column: AI Insights & Explanation -->
+<section class="w-1/3 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
+<!-- Mechanism Insight (Network Graph Simulation) -->
+<div class="glass-panel rounded-xl flex flex-col h-1/2">
+<div class="p-4 border-b border-slate-700/50 flex justify-between items-center">
+<div>
+<h3 class="text-sm font-bold text-slate-100">Mechanism Insight</h3>
+<p class="text-[10px] text-slate-400"><span id="mechanism-subtitle">EGNN Allosteric Signaling Model</span></p>
+</div>
+<span class="material-symbols-outlined text-primary">account_tree</span>
+</div>
+<div class="flex-1 bg-slate-900/30 relative flex items-center justify-center overflow-hidden">
+<!-- Network Graph Visual Placeholder -->
+<svg class="opacity-80" height="240" width="240">
+<circle id="mech-node-center" cx="120" cy="120" fill="rgba(37, 157, 244, 0.2)" r="30" stroke="#259df4" stroke-width="1"></circle>
+<circle id="mech-node-tl" cx="60" cy="60" fill="rgba(37, 157, 244, 0.1)" r="15" stroke="#259df4" stroke-width="1"></circle>
+<circle id="mech-node-tr" cx="180" cy="60" fill="rgba(37, 157, 244, 0.1)" r="20" stroke="#259df4" stroke-width="1"></circle>
+<circle id="mech-node-bl" cx="60" cy="180" fill="rgba(37, 157, 244, 0.1)" r="18" stroke="#259df4" stroke-width="1"></circle>
+<circle id="mech-node-br" cx="180" cy="180" fill="rgba(37, 157, 244, 0.1)" r="22" stroke="#259df4" stroke-width="1"></circle>
+<line id="mech-line-tl" stroke="#315168" stroke-dasharray="4" x1="120" x2="60" y1="120" y2="60"></line>
+<line id="mech-line-tr" stroke="#315168" stroke-dasharray="4" x1="120" x2="180" y1="120" y2="60"></line>
+<line id="mech-line-bl" stroke="#259df4" stroke-width="2" x1="120" x2="60" y1="120" y2="180"></line>
+<line id="mech-line-br" stroke="#259df4" stroke-width="2" x1="120" x2="180" y1="120" y2="180"></line>
+</svg>
+<div class="absolute bottom-4 left-4 right-4 bg-background-dark/80 border border-slate-700 p-3 rounded-lg">
+<p class="text-[10px] leading-relaxed text-slate-300">
+<span class="text-primary font-bold">Inference:</span> <span id="mechanism-inference">Signal propagation detected from Alpha-7 loop to neuromuscular junction docking site. </span>Allosteric coefficient: <span id="mechanism-coeff" class="text-primary font-mono">0.88</span>
+</p>
+</div>
+</div>
+</div>
+<!-- Local LLM Explanation (Ollama Interface) -->
+<div class="glass-panel rounded-xl flex-1 flex flex-col bg-slate-900/50">
+<div class="p-4 border-b border-slate-700/50 flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">smart_toy</span>
+</div>
+<div>
+<h3 class="text-sm font-bold text-slate-100">Discovery Assistant</h3>
+<p class="text-[10px] text-slate-400">Powered by Llama 3 (Local)</p>
+</div>
+</div>
+<div id="ai-chat-output" class="flex-1 p-4 overflow-y-auto custom-scrollbar flex flex-col gap-4 text-sm">
+<div class="flex flex-col gap-2">
+<div class="bg-slate-800 rounded-lg p-3 text-slate-300 text-xs self-start max-w-[90%]">
+                            How does MG-003 overcome the MuSK autoantibody interference in this model?
+                        </div>
+<div class="bg-primary/10 border border-primary/20 rounded-lg p-3 text-slate-100 text-xs self-end max-w-[90%]">
+<p class="mb-2">Based on simulated paper data and EGNN predictions, MG-003 interacts with the <span class="text-primary font-bold">Tyr-451</span> residue which is distal to the common autoantibody binding epitope.</p>
+<p>This allows for functional activation of the receptor complex even in the presence of anti-MuSK IgG4, maintaining the structural integrity of the postsynaptic fold.</p>
+<div class="mt-2 pt-2 border-t border-slate-700/50 flex gap-2">
+<span class="text-[10px] text-slate-400 flex items-center gap-1"><span class="material-symbols-outlined text-xs">description</span> Nature Comm 2024</span>
+</div>
+</div>
+</div>
+<div class="animate-pulse flex gap-2 items-center">
+<div class="w-1.5 h-1.5 rounded-full bg-slate-600"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-slate-600"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-slate-600"></div>
+</div>
+</div>
+<div class="p-4 bg-background-dark/30">
+<div class="relative">
+<input class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-xs focus:ring-1 focus:ring-primary focus:border-primary outline-none" id="ai-input" placeholder="Ask about mechanism, toxicity, or literature..." type="text"/>
+<button id="ai-send-btn" <button class="absolute right-2 top-1/2 -translate-y-1/2 text-primary">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<div id="page-dynamics" class="flex-1 flex-col gap-4 p-4 hidden" style="display:none; overflow-y:auto;">
+  <div class="glass-panel rounded-xl p-6 flex flex-col gap-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-xl font-bold text-slate-100">Molecular Dynamics</h2>
+        <p class="text-xs text-slate-400 mt-1">GROMACS / AMBER 시뮬레이션 파이프라인</p>
+      </div>
+      <span class="px-3 py-1 text-xs rounded-full bg-primary/20 text-primary font-bold">BETA</span>
+    </div>
+    <div class="grid grid-cols-3 gap-4">
+      <div class="glass-panel rounded-xl p-4 flex flex-col gap-2">
+        <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">총 시뮬레이션</p>
+        <p class="text-3xl font-bold text-primary">24</p>
+        <p class="text-[10px] text-green-400">+3 이번 주</p>
+      </div>
+      <div class="glass-panel rounded-xl p-4 flex flex-col gap-2">
+        <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">평균 시뮬레이션 길이</p>
+        <p class="text-3xl font-bold text-slate-200">128 ns</p>
+        <p class="text-[10px] text-slate-400">100ns ~ 200ns 범위</p>
+      </div>
+      <div class="glass-panel rounded-xl p-4 flex flex-col gap-2">
+        <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">평균 RMSD</p>
+        <p class="text-3xl font-bold text-amber-400">2.4 Å</p>
+        <p class="text-[10px] text-slate-400">백본 기준</p>
+      </div>
+    </div>
+    <div class="glass-panel rounded-xl p-4">
+      <h3 class="text-sm font-bold text-slate-100 mb-4">최근 시뮬레이션 작업</h3>
+      <table class="w-full text-xs">
+        <thead><tr class="text-slate-400 uppercase text-[10px] border-b border-slate-700">
+          <th class="py-2 text-left">타겟</th><th class="py-2 text-left">리간드</th><th class="py-2 text-left">길이</th><th class="py-2 text-left">상태</th><th class="py-2 text-left">평균 RMSD</th>
+        </tr></thead>
+        <tbody class="divide-y divide-slate-700/30">
+          <tr class="hover:bg-slate-700/20"><td class="py-3 text-slate-300">CHRNA1</td><td class="py-3 font-mono text-primary">CHEMBL21333</td><td class="py-3 text-slate-400">100 ns</td><td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-green-500/20 text-green-400">완료</span></td><td class="py-3 text-slate-300">1.8 Å</td></tr>
+          <tr class="hover:bg-slate-700/20"><td class="py-3 text-slate-300">CHRNA1</td><td class="py-3 font-mono text-primary">CHEMBL941</td><td class="py-3 text-slate-400">150 ns</td><td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-primary/20 text-primary">실행 중</span></td><td class="py-3 text-slate-300">2.1 Å</td></tr>
+          <tr class="hover:bg-slate-700/20"><td class="py-3 text-slate-300">MuSK</td><td class="py-3 font-mono text-slate-300">CHEMBL3137320</td><td class="py-3 text-slate-400">200 ns</td><td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-400">대기 중</span></td><td class="py-3 text-slate-400">-</td></tr>
+          <tr class="hover:bg-slate-700/20"><td class="py-3 text-slate-300">LRP4</td><td class="py-3 font-mono text-slate-300">CHEMBL1289494</td><td class="py-3 text-slate-400">100 ns</td><td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-green-500/20 text-green-400">완료</span></td><td class="py-3 text-slate-300">3.2 Å</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="page-library" class="flex-1 flex-col gap-4 p-4 hidden" style="display:none; overflow-y:auto;">
+  <div class="glass-panel rounded-xl p-6 flex flex-col gap-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-xl font-bold text-slate-100">Compound Library</h2>
+        <p class="text-xs text-slate-400 mt-1">ChEMBL 데이터베이스 기반 화합물 탐색</p>
+      </div>
+      <div class="relative">
+        <input id="library-search" class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-xs focus:ring-1 focus:ring-primary outline-none text-slate-200 w-56" placeholder="화합물 ID 또는 이름 검색..." type="text"/>
+      </div>
+    </div>
+    <div class="grid grid-cols-4 gap-3">
+      <div class="glass-panel rounded-xl p-4 flex flex-col gap-1">
+        <p class="text-[10px] text-slate-400 uppercase font-bold">전체 화합물</p>
+        <p class="text-2xl font-bold text-primary">2,017</p>
+      </div>
+      <div class="glass-panel rounded-xl p-4 flex flex-col gap-1">
+        <p class="text-[10px] text-slate-400 uppercase font-bold">도킹 완료</p>
+        <p class="text-2xl font-bold text-green-400">1,842</p>
+      </div>
+      <div class="glass-panel rounded-xl p-4 flex flex-col gap-1">
+        <p class="text-[10px] text-slate-400 uppercase font-bold">고활성 후보</p>
+        <p class="text-2xl font-bold text-amber-400">47</p>
+      </div>
+      <div class="glass-panel rounded-xl p-4 flex flex-col gap-1">
+        <p class="text-[10px] text-slate-400 uppercase font-bold">평균 Vina Score</p>
+        <p class="text-2xl font-bold text-slate-200">-7.4</p>
+      </div>
+    </div>
+    <div class="glass-panel rounded-xl p-4">
+      <h3 class="text-sm font-bold text-slate-100 mb-4">상위 화합물 목록</h3>
+      <table class="w-full text-xs">
+        <thead><tr class="text-slate-400 uppercase text-[10px] border-b border-slate-700">
+          <th class="py-2 text-left">ChEMBL ID</th><th class="py-2 text-left">분자량</th><th class="py-2 text-left">최고 Vina Score</th><th class="py-2 text-left">LogP</th><th class="py-2 text-left">TPSA</th><th class="py-2 text-left">Lipinski</th>
+        </tr></thead>
+        <tbody class="divide-y divide-slate-700/30">
+          <tr class="hover:bg-slate-700/20"><td class="py-3 font-mono text-primary">CHEMBL21333</td><td class="py-3 text-slate-300">342.4</td><td class="py-3 text-primary font-bold">-9.2</td><td class="py-3 text-slate-300">2.1</td><td class="py-3 text-slate-300">78.2</td><td class="py-3"><span class="text-green-400">통과</span></td></tr>
+          <tr class="hover:bg-slate-700/20"><td class="py-3 font-mono text-primary">CHEMBL941</td><td class="py-3 text-slate-300">298.7</td><td class="py-3 text-primary font-bold">-9.2</td><td class="py-3 text-slate-300">1.8</td><td class="py-3 text-slate-300">62.4</td><td class="py-3"><span class="text-green-400">통과</span></td></tr>
+          <tr class="hover:bg-slate-700/20"><td class="py-3 font-mono text-slate-300">CHEMBL3137320</td><td class="py-3 text-slate-300">412.5</td><td class="py-3 text-slate-300">-9.2</td><td class="py-3 text-slate-300">3.4</td><td class="py-3 text-slate-300">94.1</td><td class="py-3"><span class="text-green-400">통과</span></td></tr>
+          <tr class="hover:bg-slate-700/20"><td class="py-3 font-mono text-slate-300">CHEMBL1289494</td><td class="py-3 text-slate-300">387.2</td><td class="py-3 text-slate-300">-9.1</td><td class="py-3 text-slate-300">2.9</td><td class="py-3 text-slate-300">88.3</td><td class="py-3"><span class="text-green-400">통과</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="page-simulations" class="flex-1 flex-col gap-4 p-4 hidden" style="display:none; overflow-y:auto;">
+  <div class="glass-panel rounded-xl p-6 flex flex-col gap-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-xl font-bold text-slate-100">Docking Simulations</h2>
+        <p class="text-xs text-slate-400 mt-1">AutoDock Vina 배치 도킹 관리</p>
+      </div>
+      <button class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-bold rounded-lg hover:brightness-110 transition-all uppercase tracking-wider">
+        <span class="material-symbols-outlined text-sm">add_circle</span> 새 시뮬레이션
+      </button>
+    </div>
+    <div class="grid grid-cols-3 gap-4">
+      <div class="glass-panel rounded-xl p-4 flex flex-col gap-2">
+        <p class="text-xs text-slate-400 uppercase font-bold">실행 중</p>
+        <p class="text-3xl font-bold text-primary">3</p>
+        <div class="w-full bg-slate-700/50 h-1.5 rounded-full mt-1"><div class="bg-primary h-full rounded-full" style="width: 60%"></div></div>
+      </div>
+      <div class="glass-panel rounded-xl p-4 flex flex-col gap-2">
+        <p class="text-xs text-slate-400 uppercase font-bold">완료</p>
+        <p class="text-3xl font-bold text-green-400">1,842</p>
+        <div class="w-full bg-slate-700/50 h-1.5 rounded-full mt-1"><div class="bg-green-400 h-full rounded-full" style="width: 91%"></div></div>
+      </div>
+      <div class="glass-panel rounded-xl p-4 flex flex-col gap-2">
+        <p class="text-xs text-slate-400 uppercase font-bold">실패</p>
+        <p class="text-3xl font-bold text-red-400">12</p>
+        <div class="w-full bg-slate-700/50 h-1.5 rounded-full mt-1"><div class="bg-red-400 h-full rounded-full" style="width: 1%"></div></div>
+      </div>
+    </div>
+    <div class="glass-panel rounded-xl p-4">
+      <h3 class="text-sm font-bold text-slate-100 mb-4">시뮬레이션 작업 목록</h3>
+      <table class="w-full text-xs">
+        <thead><tr class="text-slate-400 uppercase text-[10px] border-b border-slate-700">
+          <th class="py-2 text-left">작업 ID</th><th class="py-2 text-left">타겟</th><th class="py-2 text-left">후보 수</th><th class="py-2 text-left">시작 시각</th><th class="py-2 text-left">소요 시간</th><th class="py-2 text-left">상태</th>
+        </tr></thead>
+        <tbody class="divide-y divide-slate-700/30">
+          <tr class="hover:bg-slate-700/20"><td class="py-3 font-mono text-slate-300">JOB-2024-0312</td><td class="py-3 text-slate-300">CHRNA1</td><td class="py-3 text-slate-300">2,017</td><td class="py-3 text-slate-400">2024-03-12 09:00</td><td class="py-3 text-slate-400">14h 23m</td><td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-green-500/20 text-green-400">완료</span></td></tr>
+          <tr class="hover:bg-slate-700/20"><td class="py-3 font-mono text-slate-300">JOB-2024-0318</td><td class="py-3 text-slate-300">MuSK</td><td class="py-3 text-slate-300">1,500</td><td class="py-3 text-slate-400">2024-03-18 14:00</td><td class="py-3 text-primary font-bold animate-pulse">진행 중...</td><td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-primary/20 text-primary">실행 중</span></td></tr>
+          <tr class="hover:bg-slate-700/20"><td class="py-3 font-mono text-slate-300">JOB-2024-0319</td><td class="py-3 text-slate-300">LRP4</td><td class="py-3 text-slate-300">800</td><td class="py-3 text-slate-400">2024-03-19 08:30</td><td class="py-3 text-primary font-bold animate-pulse">진행 중...</td><td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-primary/20 text-primary">실행 중</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Action Bar / Status -->
+<footer class="bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-6 py-2 flex justify-between items-center z-50">
+<div class="flex gap-6 items-center">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-green-500"></div>
+<span class="text-[10px] font-medium text-slate-500 uppercase tracking-widest">Compute Node: H100-Active</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-slate-400">database</span>
+<span class="text-[10px] font-medium text-slate-500">DB: Uniprot_2024_Q1</span>
+</div>
+</div>
+<div class="flex gap-4">
+<button class="flex items-center gap-2 px-3 py-1 bg-primary text-white text-[10px] font-bold rounded-lg hover:brightness-110 transition-all uppercase tracking-wider">
+<span class="material-symbols-outlined text-sm">rocket_launch</span>
+                Run Full MD Simulation
+            </button>
+<button class="flex items-center gap-2 px-3 py-1 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-lg hover:bg-slate-800 transition-all uppercase tracking-wider">
+<span class="material-symbols-outlined text-sm">ios_share</span>
+                Export Report
+            </button>
+</div>
+</footer>
+
+<script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+<script>
+    // ── SPA Page Switcher (global scope for onclick) ──────────────
+    window.showPage = function(pageId) {
+        // All possible page IDs
+        const pages = ['page-dynamics', 'page-library', 'page-simulations'];
+        const main = document.querySelector('main');
+        const navIds = {
+            'dashboard': 'nav-dashboard',
+            'dynamics':  'nav-dynamics',
+            'library':   'nav-library',
+            'simulations': 'nav-simulations'
+        };
+
+        if (pageId === 'dashboard') {
+            // Show main, hide all extra pages
+            if (main) main.style.display = '';
+            pages.forEach(p => {
+                const el2 = document.getElementById(p);
+                if(el2) el2.style.display = 'none';
+            });
+        } else {
+            // Hide main, show target page
+            if (main) main.style.display = 'none';
+            pages.forEach(p => {
+                const el2 = document.getElementById(p);
+                if(el2) el2.style.display = (p === 'page-' + pageId) ? 'flex' : 'none';
+            });
+        }
+
+        // Update nav active styles
+        Object.entries(navIds).forEach(([key, id]) => {
+            const link = document.getElementById(id);
+            if (!link) return;
+            if (key === pageId) {
+                link.className = 'text-primary text-sm font-semibold';
+            } else {
+                link.className = 'text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors';
+            }
+        });
+
+        window.parent.postMessage({isStreamlitMessage: true, type: 'streamlit:setFrameHeight', height: document.body.scrollHeight}, '*');
+    };
+
+    (function() {
+        let viewer = null;
+        let currentProtein = null;
+
+        const initViewer = () => {
+            if (viewer) return;
+            const element = document.getElementById('3dmol-viewer');
+            if (element) {
+                viewer = $3Dmol.createViewer(element, { backgroundColor: '#0f172a' });
+            }
+        };
+
+        const sendMessage = (type, data) => window.parent.postMessage({isStreamlitMessage: true, type, ...data}, "*");
+        const Streamlit = {
+            setComponentValue: (v) => sendMessage("streamlit:setComponentValue", {value: v}),
+            setFrameHeight: (h) => sendMessage("streamlit:setFrameHeight", {height: h}),
+            setComponentReady: () => sendMessage("streamlit:componentReady", {apiVersion: 1}),
+            onRender: (args) => {
+                if(!args) return;
+                try {
+                    const el = (id) => document.getElementById(id);
+                    if(args.table_html && el('candidate-table')) el('candidate-table').innerHTML = args.table_html;
+                    if(args.ai_html && el('ai-chat-output')) el('ai-chat-output').innerHTML = args.ai_html;
+                    
+                    const setVal = (id, v) => { const node = el(id); if(node) node.innerText = v; };
+                    const setPct = (id, v) => { const node = el(id); if(node) node.style.width = v + '%'; };
+                    
+                    if(args.chrna1_score) setVal('chrna1-score-val', args.chrna1_score);
+                    if(args.musk_score) setVal('musk-score-val', args.musk_score);
+                    if(args.lrp4_score) setVal('lrp4-score-val', args.lrp4_score);
+                    
+                    if(args.chrna1_progress) setPct('chrna1-progress', args.chrna1_progress);
+                    if(args.musk_progress) setPct('musk-progress', args.musk_progress);
+                    if(args.lrp4_progress) setPct('lrp4-progress', args.lrp4_progress);
+
+                    if(args.viewer_complex) setVal('viewer-complex-title', args.viewer_complex);
+                    if(args.viewer_ligand) setVal('viewer-ligand-label', args.viewer_ligand);
+
+                    // Mechanism Insight updates
+                    if(args.mechanism_inference) setVal('mechanism-inference', args.mechanism_inference);
+                    if(args.mechanism_coeff) setVal('mechanism-coeff', args.mechanism_coeff);
+                    if(args.mechanism_subtitle) setVal('mechanism-subtitle', args.mechanism_subtitle);
+
+                    // Dynamic Mechanism Insight SVG Graph Update
+                    if (args.mechanism_coeff) {
+                        const coeff = parseFloat(args.mechanism_coeff) || 0.75;
+                        // coeff range [0.5 - 0.99] → signal strength
+                        // Use mechanism_graph_pattern for which nodes are "active"
+                        const graphPattern = args.mechanism_graph_pattern || 'bl-br';
+                        const activeColor = '#259df4';
+                        const inactiveColor = '#315168';
+                        const brightness = Math.round(coeff * 255);
+                        const alphaActive = 0.1 + coeff * 0.5;
+                        const alphaCenter = 0.1 + coeff * 0.6;
+                        const lineW = (1 + coeff * 3).toFixed(1);
+
+                        // Reset all nodes
+                        ['mech-node-tl','mech-node-tr','mech-node-bl','mech-node-br'].forEach(id => {
+                            const n = el(id);
+                            if(n) {
+                                n.setAttribute('fill', 'rgba(37,157,244,' + (alphaActive * 0.5).toFixed(2) + ')');
+                                n.setAttribute('stroke', inactiveColor);
+                                n.setAttribute('stroke-width', '1');
+                            }
+                        });
+                        ['mech-line-tl','mech-line-tr','mech-line-bl','mech-line-br'].forEach(id => {
+                            const l = el(id);
+                            if(l) { l.setAttribute('stroke', inactiveColor); l.setAttribute('stroke-width', '1'); l.removeAttribute('stroke-dasharray'); l.setAttribute('stroke-dasharray', '4'); }
+                        });
+
+                        // Activate based on pattern
+                        const active = graphPattern.split('-');
+                        active.forEach(side => {
+                            const nid = 'mech-node-' + side;
+                            const lid = 'mech-line-' + side;
+                            const n = el(nid), l = el(lid);
+                            if(n) {
+                                n.setAttribute('fill', 'rgba(37,157,244,' + alphaActive.toFixed(2) + ')');
+                                n.setAttribute('stroke', activeColor);
+                                n.setAttribute('stroke-width', '2');
+                            }
+                            if(l) {
+                                l.setAttribute('stroke', activeColor);
+                                l.setAttribute('stroke-width', lineW);
+                                l.removeAttribute('stroke-dasharray');
+                            }
+                        });
+
+                        // Center node always active, scaled by coeff
+                        const center = el('mech-node-center');
+                        if(center) {
+                            center.setAttribute('r', Math.round(25 + coeff * 15).toString());
+                            center.setAttribute('fill', 'rgba(37,157,244,' + alphaCenter.toFixed(2) + ')');
+                            center.setAttribute('stroke', activeColor);
+                            center.setAttribute('stroke-width', '2');
+                        }
+                    }
+
+                    // RMSD chart path updates
+                    const bb = el('rmsd-backbone-path'), lg = el('rmsd-ligand-path');
+                    if(bb && args.rmsd_backbone_path) bb.setAttribute('d', args.rmsd_backbone_path);
+                    if(lg && args.rmsd_ligand_path) lg.setAttribute('d', args.rmsd_ligand_path);
+
+                    // 3D Rendering Logic
+                    if (args.protein_pdb || args.ligand_pdbqt) {
+                        initViewer();
+                        if (viewer) {
+                            // If protein changed or we are initializing, clear and re-add
+                            if (args.protein_pdb && args.protein_pdb !== currentProtein) {
+                                viewer.clear();
+                                viewer.addModel(args.protein_pdb, "pdb");
+                                viewer.setStyle({model: 0}, { cartoon: { color: 'spectrum', opacity: 0.8 } });
+                                currentProtein = args.protein_pdb;
+                                
+                                if (args.ligand_pdbqt) {
+                                    const lModel = viewer.addModel(args.ligand_pdbqt, "pdbqt");
+                                    viewer.setStyle({model: lModel.getID()}, { stick: { colorscheme: 'greenCarbon', radius: 0.2 }, sphere: { radius: 0.4 } });
+                                    viewer.zoomTo({model: lModel.getID()});
+                                } else {
+                                    viewer.zoomTo();
+                                }
+                            } else if (args.ligand_pdbqt) {
+                                // Protein is same, just update/add ligand
+                                // To remove previous ligand without getModelsByFilter, 
+                                // we can just clear and re-add everything if simpler, 
+                                // but let's try to just clear and re-render if it's not too slow.
+                                viewer.clear();
+                                viewer.addModel(currentProtein, "pdb");
+                                viewer.setStyle({model: 0}, { cartoon: { color: 'spectrum', opacity: 0.8 } });
+                                
+                                const lModel = viewer.addModel(args.ligand_pdbqt, "pdbqt");
+                                viewer.setStyle({model: lModel.getID()}, { stick: { colorscheme: 'greenCarbon', radius: 0.2 }, sphere: { radius: 0.4 } });
+                                viewer.zoomTo({model: lModel.getID()});
+                            }
+                            viewer.render();
+                        }
+                    }
+
+                    Streamlit.setFrameHeight(document.body.scrollHeight);
+                } catch(e) { console.error("Render catch:", e); }
+            }
+        };
+        window.addEventListener("message", (e) => { if (e.data.type === "streamlit:render") Streamlit.onRender(e.data.args); });
+        window.addEventListener('load', () => {
+            const el = (id) => document.getElementById(id);
+            const b = el('btn-view-all'); if(b) b.onclick = () => Streamlit.setComponentValue({action: 'view_all_candidates', ts: Date.now()});
+            const s = el('ai-send-btn'), i = el('ai-input');
+            if(s && i) {
+                s.onclick = () => { if(i.value) { Streamlit.setComponentValue({action: 'ai_query', query: i.value, ts: Date.now()}); i.value=''; } };
+                i.onkeypress = (e) => { if(e.key==='Enter') s.click(); };
+            }
+            
+            const table = el('candidate-table');
+            if(table) {
+                table.onclick = (e) => {
+                    const row = e.target.closest('tr');
+                    if(row && row.dataset.id) {
+                        Streamlit.setComponentValue({action: 'select_candidate', id: row.dataset.id, ts: Date.now()});
+                    }
+                };
+            }
+
+        initViewer();
+            Streamlit.setComponentReady();
+            Streamlit.setFrameHeight(document.body.scrollHeight);
+
+            // ── Animation / Video Player ─────────────────────────────
+            let isPlaying = false;
+            let animationId = null;
+            let simTime = 0;
+            const MAX_TIME = 50;
+
+            const updateTime = () => {
+                const t = el('player-time');
+                if (t) t.innerText = 'TIME: ' + simTime.toFixed(1) + 'ns';
+            };
+
+            const animate = () => {
+                if (!isPlaying) return;
+                simTime += 0.2;
+                if (simTime > MAX_TIME) simTime = 0;
+                updateTime();
+                if (viewer) {
+                    viewer.rotate(1, 'y');
+                    viewer.render();
+                }
+                animationId = requestAnimationFrame(animate);
+            };
+
+            const playBtn = el('btn-play-pause');
+            if (playBtn) {
+                playBtn.onclick = () => {
+                    isPlaying = !isPlaying;
+                    playBtn.innerText = isPlaying ? 'pause_circle' : 'play_circle';
+                    if (isPlaying) animate();
+                    else if (animationId) cancelAnimationFrame(animationId);
+                };
+            }
+
+            const skipPrev = el('btn-skip-prev');
+            if (skipPrev) {
+                skipPrev.onclick = () => {
+                    simTime = Math.max(0, simTime - 5);
+                    updateTime();
+                    if (viewer) { viewer.rotate(-30, 'y'); viewer.render(); }
+                };
+            }
+
+            const skipNext = el('btn-skip-next');
+            if (skipNext) {
+                skipNext.onclick = () => {
+                    simTime = Math.min(MAX_TIME, simTime + 5);
+                    updateTime();
+                    if (viewer) { viewer.rotate(30, 'y'); viewer.render(); }
+                };
+            }
+
+            // ── Toolbar Buttons ─────────────────────────────────────
+            // Camera / Screenshot
+            const screenshotBtn = el('btn-screenshot');
+            if (screenshotBtn) {
+                screenshotBtn.onclick = () => {
+                    if (!viewer) return;
+                    const uri = viewer.pngURI();
+                    const link = document.createElement('a');
+                    link.download = 'mg_complex_snapshot.png';
+                    link.href = uri;
+                    link.click();
+                };
+            }
+
+            // Layers / Style Cycle
+            const styles = ['cartoon', 'surface', 'stick'];
+            let styleIdx = 0;
+            const styleBtn = el('btn-style-cycle');
+            if (styleBtn) {
+                styleBtn.onclick = () => {
+                    if (!viewer || !currentProtein) return;
+                    styleIdx = (styleIdx + 1) % styles.length;
+                    const s = styles[styleIdx];
+                    if (s === 'cartoon') {
+                        viewer.setStyle({model: 0}, { cartoon: { color: 'spectrum', opacity: 0.85 } });
+                    } else if (s === 'surface') {
+                        viewer.setStyle({model: 0}, { surface: { opacity: 0.6, colorscheme: 'greenCarbon' } });
+                    } else {
+                        viewer.setStyle({model: 0}, { stick: { colorscheme: 'Jmol', radius: 0.15 } });
+                    }
+                    viewer.render();
+                    styleBtn.title = '현재: ' + s;
+                };
+            }
+
+            // Zoom to Ligand
+            const zoomBtn = el('btn-zoom-ligand');
+            if (zoomBtn) {
+                zoomBtn.onclick = () => {
+                    if (!viewer) return;
+                    viewer.zoomTo({model: 1});
+                    viewer.render();
+                };
+            }
+        });
+    })();
+</script>
+</body></html>
