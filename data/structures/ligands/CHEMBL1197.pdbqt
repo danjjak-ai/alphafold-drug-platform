@@ -1,0 +1,39 @@
+REMARK SMILES CC(CNC1CCCCC1)OC(=O)c1ccccc1
+REMARK SMILES IDX 1 1 2 2 3 3 4 4 5 6 6 7 10 8 7 9 9 10 8 11 11 12 12 13 13 14
+REMARK SMILES IDX 14 15 15 16 19 17 16 18 18 19 17 20
+REMARK H PARENT 4 5
+ROOT
+ATOM      1  C   UNL     1       0.631  -2.568   0.894  1.00  0.00     0.054 C 
+ATOM      2  C   UNL     1       0.646  -1.126   0.395  1.00  0.00     0.187 C 
+ENDROOT
+BRANCH   2   3
+ATOM      3  C   UNL     1      -0.255  -0.926  -0.847  1.00  0.00     0.126 C 
+BRANCH   3   4
+ATOM      4  N   UNL     1      -1.677  -1.268  -0.706  1.00  0.00    -0.310 NA
+ATOM      5  H   UNL     1      -1.769  -2.250  -0.453  1.00  0.00     0.123 HD
+BRANCH   4   6
+ATOM      6  C   UNL     1      -2.416  -0.435   0.256  1.00  0.00     0.053 C 
+ATOM      7  C   UNL     1      -2.428   1.046  -0.177  1.00  0.00     0.019 C 
+ATOM      8  C   UNL     1      -3.847  -0.992   0.429  1.00  0.00     0.019 C 
+ATOM      9  C   UNL     1      -3.654   1.784   0.349  1.00  0.00     0.002 C 
+ATOM     10  C   UNL     1      -4.848  -0.313  -0.498  1.00  0.00     0.002 C 
+ATOM     11  C   UNL     1      -4.946   1.187  -0.212  1.00  0.00     0.000 C 
+ENDBRANCH   4   6
+ENDBRANCH   3   4
+ENDBRANCH   2   3
+BRANCH   2  12
+ATOM     12  O   UNL     1       2.017  -0.832   0.043  1.00  0.00    -0.458 OA
+BRANCH  12  13
+ATOM     13  C   UNL     1       2.362   0.480   0.055  1.00  0.00     0.338 C 
+ATOM     14  O   UNL     1       1.624   1.410   0.337  1.00  0.00    -0.246 OA
+BRANCH  13  15
+ATOM     15  C   UNL     1       3.790   0.650  -0.330  1.00  0.00     0.060 A 
+ATOM     16  C   UNL     1       4.311   1.950  -0.380  1.00  0.00     0.015 A 
+ATOM     17  C   UNL     1       4.620  -0.436  -0.640  1.00  0.00     0.015 A 
+ATOM     18  C   UNL     1       5.644   2.162  -0.737  1.00  0.00     0.001 A 
+ATOM     19  C   UNL     1       5.954  -0.220  -0.996  1.00  0.00     0.001 A 
+ATOM     20  C   UNL     1       6.464   1.077  -1.044  1.00  0.00     0.000 A 
+ENDBRANCH  13  15
+ENDBRANCH  12  13
+ENDBRANCH   2  12
+TORSDOF 6

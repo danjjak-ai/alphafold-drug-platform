@@ -33,22 +33,24 @@ models/*.pth
 models/*.h5
 models/*.ckpt
 
-# ─── 데이터베이스 (런타임 생성) ──────────────────
-data/mg_discovery.db
-data/mg_discovery.db-shm
-data/mg_discovery.db-wal
-*.db
-*.sqlite
-*.sqlite3
+# ─── 데이터베이스 (데모용 DB 포함) ──────────────────
+# data/mg_discovery.db 는 런타임에 시딩되지만, 빌드 시 필요할 수 있으므로 무시하되
+# ! 명령어로 필요한 경우 예외를 둡니다.
+data/mg_discovery.db*
+!data/mg_discovery.db
 
-# ─── 구조 데이터 파일 (크기 큼 / 다운로드 가능) ──
-data/structures/targets/
-data/structures/ligands/
-data/processed/
+# ─── 구조 데이터 파일 (샘플 포함) ──
+!data/structures/targets/7ql6_raw.pdb
 
-# ─── 도킹 시뮬레이션 결과 (크기 큼) ─────────────
-results/docking/
-results/top_candidates.csv
+# ─── 도킹 시뮬레이션 결과 (데모용 샘플 허용) ─────────
+# results/docking/ 전체를 무시하되, 주요 샘플 파일은 예외 처리
+results/docking/*
+!results/docking/chrna1_CHEMBL21333_out.pdbqt
+!results/docking/chrna1_CHEMBL1200640_out.pdbqt
+!results/docking/chrna1_CHEMBL941_out.pdbqt
+!results/docking/chrna1_CHEMBL2105762_out.pdbqt
+!results/docking/chrna1_CHEMBL1201131_out.pdbqt
+!results/docking/.gitkeep
 
 # ─── Jupyter Notebook ────────────────────────────
 .ipynb_checkpoints/

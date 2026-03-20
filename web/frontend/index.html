@@ -56,10 +56,10 @@
 </div>
 <div class="flex flex-1 justify-end gap-6 items-center">
 <nav class="hidden md:flex items-center gap-6">
-<a id="nav-dashboard" class="text-primary text-sm font-semibold" href="#" onclick="showPage('dashboard');return false;">Dashboard</a>
-<a id="nav-dynamics" class="text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" href="#" onclick="showPage('dynamics');return false;">Molecular Dynamics</a>
-<a id="nav-library" class="text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" href="#" onclick="showPage('library');return false;">Library</a>
-<a id="nav-simulations" class="text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" href="#" onclick="showPage('simulations');return false;">Simulations</a>
+<a class="text-primary text-sm font-semibold" href="#">Dashboard</a>
+<a class="text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" href="#">Molecular Dynamics</a>
+<a class="text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" href="#">Library</a>
+<a class="text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" href="#">Simulations</a>
 </nav>
 <div class="flex gap-2">
 <button class="flex items-center justify-center rounded-lg h-10 w-10 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-all">
@@ -70,7 +70,7 @@
 </button>
 </div>
 <div class="h-10 w-10 rounded-full border-2 border-primary/30 p-0.5">
-<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-full w-full" data-alt="Researcher Profile Avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCT6LHa9AgeEetnp3Zt67tCU1oGSfzIXcJgXdLuJYukjHoFqgF-j-WsmdctuXYEsoTPs6OZY6MftI5bHif6NrLbe37R60j5VayKcrsLcANTchRKx5yxBQ069r9DdAXm2JzloJHghKVpkr3hOjI_u6tfYb6dSuA27tRwFtcxhNnc6hzVBC9xOFYfX1BPHq9Z-LlPAkkMGiuWkXlyTw1yvoFcrbN9y9ct7VK9Z51sNeLx9vEAWuN86w40FvrZa1LdxzVW4ZGTYNjWzuk");'></div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-full w-full" data-alt="Researcher Profile Avatar" style='background-image: url("https://lh3.googleusercontent.com/d/1X5L-9Iu1R2u7W-s7S_V0U6fO-Xq4zQz=") ;'></div>
 </div>
 </div>
 </header>
@@ -207,7 +207,7 @@
 <div class="absolute top-4 left-4 z-10 flex flex-col gap-2">
 <div class="bg-background-dark/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700">
 <p class="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">Current Complex</p>
-<p class="text-sm font-bold text-white"><span id="viewer-complex-title">CHRNA1 : MG-003 Binding</span></p>
+<p class="text-sm font-bold text-white">CHRNA1 : MG-003 Binding</p>
 </div>
 <div class="flex gap-2">
 <div class="bg-slate-800/80 backdrop-blur-md px-2 py-1 rounded border border-slate-700 text-[10px] text-slate-300 flex items-center gap-1">
@@ -230,13 +230,24 @@
 </button>
 </div>
 <!-- Simulation/3D Rendering Placeholder -->
-<div id="3dmol-viewer" class="w-full h-full bg-slate-900" style="position: relative; min-height: 400px;"></div>
-<div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-background-dark/60 backdrop-blur-xl px-6 py-3 rounded-full border border-primary/20">
-<span id="btn-skip-prev" class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-primary">skip_previous</span>
-<span id="btn-play-pause" class="material-symbols-outlined text-3xl text-primary cursor-pointer hover:scale-110 transition-transform">play_circle</span>
-<span id="btn-skip-next" class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-primary">skip_next</span>
-<div class="h-4 w-[1px] bg-slate-700"></div>
-<span id="player-time" class="text-xs font-mono text-slate-300 tracking-widest">TIME: 0.0ns</span>
+<div class="w-full h-full bg-slate-900 relative">
+    <div id="3dmol-viewer" class="w-full h-full" style="position: absolute; top: 0; left: 0;"></div>
+    <!-- 3D Error Overlay -->
+    <div id="viewer-error" class="hidden absolute inset-0 bg-slate-900/80 flex items-center justify-center z-50 p-6 text-center">
+        <div class="flex flex-col items-center gap-3">
+            <span class="material-symbols-outlined text-red-500 text-5xl">warning</span>
+            <p class="text-sm text-slate-100 font-bold" id="viewer-error-msg">Failed to load structure data.</p>
+            <p class="text-[10px] text-slate-400">Please select another candidate or ensure pdbqt files are present in results/docking/.</p>
+        </div>
+    </div>
+    <!-- Video Player Controls Overlay -->
+    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-background-dark/60 backdrop-blur-xl px-6 py-3 rounded-full border border-primary/20 z-20">
+        <span id="btn-skip-prev" class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-primary">skip_previous</span>
+        <span id="btn-play-pause" class="material-symbols-outlined text-3xl text-primary cursor-pointer hover:scale-110 transition-transform">play_circle</span>
+        <span id="btn-skip-next" class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-primary">skip_next</span>
+        <div class="h-4 w-[1px] bg-slate-700"></div>
+        <span id="player-time" class="text-xs font-mono text-slate-300 tracking-widest">TIME: 0.0ns</span>
+    </div>
 </div>
 </div>
 </div>
@@ -279,28 +290,29 @@
 <div class="p-4 border-b border-slate-700/50 flex justify-between items-center">
 <div>
 <h3 class="text-sm font-bold text-slate-100">Mechanism Insight</h3>
-<p class="text-[10px] text-slate-400"><span id="mechanism-subtitle">EGNN Allosteric Signaling Model</span></p>
+<p class="text-[10px] text-slate-400">EGNN Allosteric Signaling Model</p>
 </div>
 <span class="material-symbols-outlined text-primary">account_tree</span>
 </div>
-<div class="flex-1 bg-slate-900/30 relative flex items-center justify-center overflow-hidden">
-<!-- Network Graph Visual Placeholder -->
-<svg class="opacity-80" height="240" width="240">
-<circle id="mech-node-center" cx="120" cy="120" fill="rgba(37, 157, 244, 0.2)" r="30" stroke="#259df4" stroke-width="1"></circle>
-<circle id="mech-node-tl" cx="60" cy="60" fill="rgba(37, 157, 244, 0.1)" r="15" stroke="#259df4" stroke-width="1"></circle>
-<circle id="mech-node-tr" cx="180" cy="60" fill="rgba(37, 157, 244, 0.1)" r="20" stroke="#259df4" stroke-width="1"></circle>
-<circle id="mech-node-bl" cx="60" cy="180" fill="rgba(37, 157, 244, 0.1)" r="18" stroke="#259df4" stroke-width="1"></circle>
-<circle id="mech-node-br" cx="180" cy="180" fill="rgba(37, 157, 244, 0.1)" r="22" stroke="#259df4" stroke-width="1"></circle>
-<line id="mech-line-tl" stroke="#315168" stroke-dasharray="4" x1="120" x2="60" y1="120" y2="60"></line>
-<line id="mech-line-tr" stroke="#315168" stroke-dasharray="4" x1="120" x2="180" y1="120" y2="60"></line>
-<line id="mech-line-bl" stroke="#259df4" stroke-width="2" x1="120" x2="60" y1="120" y2="180"></line>
-<line id="mech-line-br" stroke="#259df4" stroke-width="2" x1="120" x2="180" y1="120" y2="180"></line>
-</svg>
-<div class="absolute bottom-4 left-4 right-4 bg-background-dark/80 border border-slate-700 p-3 rounded-lg">
-<p class="text-[10px] leading-relaxed text-slate-300">
-<span class="text-primary font-bold">Inference:</span> <span id="mechanism-inference">Signal propagation detected from Alpha-7 loop to neuromuscular junction docking site. </span>Allosteric coefficient: <span id="mechanism-coeff" class="text-primary font-mono">0.88</span>
-</p>
-</div>
+<div class="flex-1 bg-slate-900/30 relative overflow-hidden p-2">
+  <div id="mech-pocket-legend" class="absolute top-2 right-2 z-10 flex flex-col gap-1 text-[9px]">
+    <div class="flex items-center gap-1"><span style="display:inline-block;width:14px;height:2px;background:#3b82f6;border-top:2px dashed #3b82f6"></span><span class="text-slate-400">H-Bond</span></div>
+    <div class="flex items-center gap-1"><span style="display:inline-block;width:14px;height:0;border-top:2px dotted #22c55e"></span><span class="text-slate-400">Hydrophobic</span></div>
+    <div class="flex items-center gap-1"><span style="display:inline-block;width:14px;height:2px;background:#a855f7"></span><span class="text-slate-400">π-Stack</span></div>
+    <div class="flex items-center gap-1"><span style="display:inline-block;width:14px;height:2px;background:#f97316"></span><span class="text-slate-400">Electrostatic</span></div>
+  </div>
+  <svg id="mech-binding-svg" width="100%" height="100%" viewBox="0 0 260 220" preserveAspectRatio="xMidYMid meet" style="overflow:visible">
+    <defs>
+      <filter id="glow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+  </svg>
+  <div class="absolute bottom-2 left-2 right-2 bg-background-dark/85 border border-slate-700 px-3 py-2 rounded-lg">
+    <p class="text-[10px] leading-relaxed text-slate-300">
+      <span class="text-primary font-bold">Inferred Mode:</span>
+      <span id="mechanism-inference">Awaiting simulation data... </span>
+      Coefficient: <span id="mechanism-coeff" class="text-primary font-mono">0.00</span>
+    </p>
+  </div>
 </div>
 </div>
 <!-- Local LLM Explanation (Ollama Interface) -->
@@ -335,8 +347,8 @@
 </div>
 <div class="p-4 bg-background-dark/30">
 <div class="relative">
-<input class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-xs focus:ring-1 focus:ring-primary focus:border-primary outline-none" id="ai-input" placeholder="Ask about mechanism, toxicity, or literature..." type="text"/>
-<button id="ai-send-btn" <button class="absolute right-2 top-1/2 -translate-y-1/2 text-primary">
+<input class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-xs focus:ring-1 focus:ring-primary focus:border-primary outline-none" placeholder="Ask about mechanism, toxicity, or literature..." type="text"/>
+<button class="absolute right-2 top-1/2 -translate-y-1/2 text-primary">
 <span class="material-symbols-outlined">send</span>
 </button>
 </div>
@@ -344,139 +356,6 @@
 </div>
 </section>
 </main>
-<div id="page-dynamics" class="flex-1 flex-col gap-4 p-4 hidden" style="display:none; overflow-y:auto;">
-  <div class="glass-panel rounded-xl p-6 flex flex-col gap-4">
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-xl font-bold text-slate-100">Molecular Dynamics</h2>
-        <p class="text-xs text-slate-400 mt-1">GROMACS / AMBER 시뮬레이션 파이프라인</p>
-      </div>
-      <span class="px-3 py-1 text-xs rounded-full bg-primary/20 text-primary font-bold">BETA</span>
-    </div>
-    <div class="grid grid-cols-3 gap-4">
-      <div class="glass-panel rounded-xl p-4 flex flex-col gap-2">
-        <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">총 시뮬레이션</p>
-        <p class="text-3xl font-bold text-primary">24</p>
-        <p class="text-[10px] text-green-400">+3 이번 주</p>
-      </div>
-      <div class="glass-panel rounded-xl p-4 flex flex-col gap-2">
-        <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">평균 시뮬레이션 길이</p>
-        <p class="text-3xl font-bold text-slate-200">128 ns</p>
-        <p class="text-[10px] text-slate-400">100ns ~ 200ns 범위</p>
-      </div>
-      <div class="glass-panel rounded-xl p-4 flex flex-col gap-2">
-        <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">평균 RMSD</p>
-        <p class="text-3xl font-bold text-amber-400">2.4 Å</p>
-        <p class="text-[10px] text-slate-400">백본 기준</p>
-      </div>
-    </div>
-    <div class="glass-panel rounded-xl p-4">
-      <h3 class="text-sm font-bold text-slate-100 mb-4">최근 시뮬레이션 작업</h3>
-      <table class="w-full text-xs">
-        <thead><tr class="text-slate-400 uppercase text-[10px] border-b border-slate-700">
-          <th class="py-2 text-left">타겟</th><th class="py-2 text-left">리간드</th><th class="py-2 text-left">길이</th><th class="py-2 text-left">상태</th><th class="py-2 text-left">평균 RMSD</th>
-        </tr></thead>
-        <tbody class="divide-y divide-slate-700/30">
-          <tr class="hover:bg-slate-700/20"><td class="py-3 text-slate-300">CHRNA1</td><td class="py-3 font-mono text-primary">CHEMBL21333</td><td class="py-3 text-slate-400">100 ns</td><td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-green-500/20 text-green-400">완료</span></td><td class="py-3 text-slate-300">1.8 Å</td></tr>
-          <tr class="hover:bg-slate-700/20"><td class="py-3 text-slate-300">CHRNA1</td><td class="py-3 font-mono text-primary">CHEMBL941</td><td class="py-3 text-slate-400">150 ns</td><td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-primary/20 text-primary">실행 중</span></td><td class="py-3 text-slate-300">2.1 Å</td></tr>
-          <tr class="hover:bg-slate-700/20"><td class="py-3 text-slate-300">MuSK</td><td class="py-3 font-mono text-slate-300">CHEMBL3137320</td><td class="py-3 text-slate-400">200 ns</td><td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-400">대기 중</span></td><td class="py-3 text-slate-400">-</td></tr>
-          <tr class="hover:bg-slate-700/20"><td class="py-3 text-slate-300">LRP4</td><td class="py-3 font-mono text-slate-300">CHEMBL1289494</td><td class="py-3 text-slate-400">100 ns</td><td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-green-500/20 text-green-400">완료</span></td><td class="py-3 text-slate-300">3.2 Å</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<div id="page-library" class="flex-1 flex-col gap-4 p-4 hidden" style="display:none; overflow-y:auto;">
-  <div class="glass-panel rounded-xl p-6 flex flex-col gap-4">
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-xl font-bold text-slate-100">Compound Library</h2>
-        <p class="text-xs text-slate-400 mt-1">ChEMBL 데이터베이스 기반 화합물 탐색</p>
-      </div>
-      <div class="relative">
-        <input id="library-search" class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-xs focus:ring-1 focus:ring-primary outline-none text-slate-200 w-56" placeholder="화합물 ID 또는 이름 검색..." type="text"/>
-      </div>
-    </div>
-    <div class="grid grid-cols-4 gap-3">
-      <div class="glass-panel rounded-xl p-4 flex flex-col gap-1">
-        <p class="text-[10px] text-slate-400 uppercase font-bold">전체 화합물</p>
-        <p class="text-2xl font-bold text-primary">2,017</p>
-      </div>
-      <div class="glass-panel rounded-xl p-4 flex flex-col gap-1">
-        <p class="text-[10px] text-slate-400 uppercase font-bold">도킹 완료</p>
-        <p class="text-2xl font-bold text-green-400">1,842</p>
-      </div>
-      <div class="glass-panel rounded-xl p-4 flex flex-col gap-1">
-        <p class="text-[10px] text-slate-400 uppercase font-bold">고활성 후보</p>
-        <p class="text-2xl font-bold text-amber-400">47</p>
-      </div>
-      <div class="glass-panel rounded-xl p-4 flex flex-col gap-1">
-        <p class="text-[10px] text-slate-400 uppercase font-bold">평균 Vina Score</p>
-        <p class="text-2xl font-bold text-slate-200">-7.4</p>
-      </div>
-    </div>
-    <div class="glass-panel rounded-xl p-4">
-      <h3 class="text-sm font-bold text-slate-100 mb-4">상위 화합물 목록</h3>
-      <table class="w-full text-xs">
-        <thead><tr class="text-slate-400 uppercase text-[10px] border-b border-slate-700">
-          <th class="py-2 text-left">ChEMBL ID</th><th class="py-2 text-left">분자량</th><th class="py-2 text-left">최고 Vina Score</th><th class="py-2 text-left">LogP</th><th class="py-2 text-left">TPSA</th><th class="py-2 text-left">Lipinski</th>
-        </tr></thead>
-        <tbody class="divide-y divide-slate-700/30">
-          <tr class="hover:bg-slate-700/20"><td class="py-3 font-mono text-primary">CHEMBL21333</td><td class="py-3 text-slate-300">342.4</td><td class="py-3 text-primary font-bold">-9.2</td><td class="py-3 text-slate-300">2.1</td><td class="py-3 text-slate-300">78.2</td><td class="py-3"><span class="text-green-400">통과</span></td></tr>
-          <tr class="hover:bg-slate-700/20"><td class="py-3 font-mono text-primary">CHEMBL941</td><td class="py-3 text-slate-300">298.7</td><td class="py-3 text-primary font-bold">-9.2</td><td class="py-3 text-slate-300">1.8</td><td class="py-3 text-slate-300">62.4</td><td class="py-3"><span class="text-green-400">통과</span></td></tr>
-          <tr class="hover:bg-slate-700/20"><td class="py-3 font-mono text-slate-300">CHEMBL3137320</td><td class="py-3 text-slate-300">412.5</td><td class="py-3 text-slate-300">-9.2</td><td class="py-3 text-slate-300">3.4</td><td class="py-3 text-slate-300">94.1</td><td class="py-3"><span class="text-green-400">통과</span></td></tr>
-          <tr class="hover:bg-slate-700/20"><td class="py-3 font-mono text-slate-300">CHEMBL1289494</td><td class="py-3 text-slate-300">387.2</td><td class="py-3 text-slate-300">-9.1</td><td class="py-3 text-slate-300">2.9</td><td class="py-3 text-slate-300">88.3</td><td class="py-3"><span class="text-green-400">통과</span></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<div id="page-simulations" class="flex-1 flex-col gap-4 p-4 hidden" style="display:none; overflow-y:auto;">
-  <div class="glass-panel rounded-xl p-6 flex flex-col gap-4">
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-xl font-bold text-slate-100">Docking Simulations</h2>
-        <p class="text-xs text-slate-400 mt-1">AutoDock Vina 배치 도킹 관리</p>
-      </div>
-      <button class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-bold rounded-lg hover:brightness-110 transition-all uppercase tracking-wider">
-        <span class="material-symbols-outlined text-sm">add_circle</span> 새 시뮬레이션
-      </button>
-    </div>
-    <div class="grid grid-cols-3 gap-4">
-      <div class="glass-panel rounded-xl p-4 flex flex-col gap-2">
-        <p class="text-xs text-slate-400 uppercase font-bold">실행 중</p>
-        <p class="text-3xl font-bold text-primary">3</p>
-        <div class="w-full bg-slate-700/50 h-1.5 rounded-full mt-1"><div class="bg-primary h-full rounded-full" style="width: 60%"></div></div>
-      </div>
-      <div class="glass-panel rounded-xl p-4 flex flex-col gap-2">
-        <p class="text-xs text-slate-400 uppercase font-bold">완료</p>
-        <p class="text-3xl font-bold text-green-400">1,842</p>
-        <div class="w-full bg-slate-700/50 h-1.5 rounded-full mt-1"><div class="bg-green-400 h-full rounded-full" style="width: 91%"></div></div>
-      </div>
-      <div class="glass-panel rounded-xl p-4 flex flex-col gap-2">
-        <p class="text-xs text-slate-400 uppercase font-bold">실패</p>
-        <p class="text-3xl font-bold text-red-400">12</p>
-        <div class="w-full bg-slate-700/50 h-1.5 rounded-full mt-1"><div class="bg-red-400 h-full rounded-full" style="width: 1%"></div></div>
-      </div>
-    </div>
-    <div class="glass-panel rounded-xl p-4">
-      <h3 class="text-sm font-bold text-slate-100 mb-4">시뮬레이션 작업 목록</h3>
-      <table class="w-full text-xs">
-        <thead><tr class="text-slate-400 uppercase text-[10px] border-b border-slate-700">
-          <th class="py-2 text-left">작업 ID</th><th class="py-2 text-left">타겟</th><th class="py-2 text-left">후보 수</th><th class="py-2 text-left">시작 시각</th><th class="py-2 text-left">소요 시간</th><th class="py-2 text-left">상태</th>
-        </tr></thead>
-        <tbody class="divide-y divide-slate-700/30">
-          <tr class="hover:bg-slate-700/20"><td class="py-3 font-mono text-slate-300">JOB-2024-0312</td><td class="py-3 text-slate-300">CHRNA1</td><td class="py-3 text-slate-300">2,017</td><td class="py-3 text-slate-400">2024-03-12 09:00</td><td class="py-3 text-slate-400">14h 23m</td><td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-green-500/20 text-green-400">완료</span></td></tr>
-          <tr class="hover:bg-slate-700/20"><td class="py-3 font-mono text-slate-300">JOB-2024-0318</td><td class="py-3 text-slate-300">MuSK</td><td class="py-3 text-slate-300">1,500</td><td class="py-3 text-slate-400">2024-03-18 14:00</td><td class="py-3 text-primary font-bold animate-pulse">진행 중...</td><td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-primary/20 text-primary">실행 중</span></td></tr>
-          <tr class="hover:bg-slate-700/20"><td class="py-3 font-mono text-slate-300">JOB-2024-0319</td><td class="py-3 text-slate-300">LRP4</td><td class="py-3 text-slate-300">800</td><td class="py-3 text-slate-400">2024-03-19 08:30</td><td class="py-3 text-primary font-bold animate-pulse">진행 중...</td><td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-primary/20 text-primary">실행 중</span></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
 <!-- Bottom Action Bar / Status -->
 <footer class="bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-6 py-2 flex justify-between items-center z-50">
 <div class="flex gap-6 items-center">
@@ -503,60 +382,78 @@
 
 <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
 <script>
-    // ── SPA Page Switcher (global scope for onclick) ──────────────
+    // ── SPA Page Switcher ──────────────────────────────────────────
     window.showPage = function(pageId) {
-        // All possible page IDs
         const pages = ['page-dynamics', 'page-library', 'page-simulations'];
         const main = document.querySelector('main');
-        const navIds = {
-            'dashboard': 'nav-dashboard',
-            'dynamics':  'nav-dynamics',
-            'library':   'nav-library',
-            'simulations': 'nav-simulations'
-        };
-
+        const navIds = { 'dashboard': 'nav-dashboard', 'dynamics': 'nav-dynamics', 'library': 'nav-library', 'simulations': 'nav-simulations' };
         if (pageId === 'dashboard') {
-            // Show main, hide all extra pages
             if (main) main.style.display = '';
-            pages.forEach(p => {
-                const el2 = document.getElementById(p);
-                if(el2) el2.style.display = 'none';
-            });
+            pages.forEach(p => { const el2 = document.getElementById(p); if(el2) el2.style.display = 'none'; });
         } else {
-            // Hide main, show target page
             if (main) main.style.display = 'none';
-            pages.forEach(p => {
-                const el2 = document.getElementById(p);
-                if(el2) el2.style.display = (p === 'page-' + pageId) ? 'flex' : 'none';
-            });
+            pages.forEach(p => { const el2 = document.getElementById(p); if(el2) el2.style.display = (p === 'page-' + pageId) ? 'flex' : 'none'; });
         }
-
-        // Update nav active styles
         Object.entries(navIds).forEach(([key, id]) => {
-            const link = document.getElementById(id);
-            if (!link) return;
-            if (key === pageId) {
-                link.className = 'text-primary text-sm font-semibold';
-            } else {
-                link.className = 'text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors';
-            }
+            const link = document.getElementById(id); if (!link) return;
+            link.className = (key === pageId) ? 'text-primary text-sm font-semibold' : 'text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors';
         });
-
         window.parent.postMessage({isStreamlitMessage: true, type: 'streamlit:setFrameHeight', height: document.body.scrollHeight}, '*');
+    };
+
+    // ── Professional 2D Binding Pocket Diagram ────────────────────
+    window.drawBindingDiagram = function(residues, coeff, chemblId) {
+        const svg = document.getElementById('mech-binding-svg');
+        if (!svg) return;
+        while (svg.children.length > 2) svg.removeChild(svg.lastChild);
+        const ns = 'http://www.w3.org/2000/svg';
+        const cx = 130, cy = 108, r = 68;
+        const intColors = {
+            'hbond': { line: '#3b82f6', fill: 'rgba(59,130,246,0.18)', dash: '6,3' },
+            'hydrophobic': { line: '#22c55e', fill: 'rgba(34,197,94,0.12)', dash: '3,3' },
+            'pistack': { line: '#a855f7', fill: 'rgba(168,85,247,0.18)', dash: null },
+            'electrostatic': { line: '#f97316', fill: 'rgba(249,115,22,0.18)', dash: null },
+            'vdw': { line: '#94a3b8', fill: 'rgba(148,163,184,0.1)', dash: '2,4' },
+        };
+        const aaTypeColors = { 'hydrophobic': '#4ade80', 'polar': '#60a5fa', 'positive': '#fb923c', 'negative': '#f87171', 'aromatic': '#c084fc' };
+        const mkEl = (tag, attrs) => { const e = document.createElementNS(ns, tag); Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v)); return e; };
+        svg.appendChild(mkEl('ellipse', {cx, cy, rx: r+26, ry: r+20, fill: 'rgba(37,157,244,0.04)', stroke: '#259df4', 'stroke-width': '0.5', 'stroke-dasharray': '4,4'}));
+        residues.forEach((res, i) => {
+            const angle = (2 * Math.PI * i / residues.length) - Math.PI / 2;
+            const rx2 = cx + r * Math.cos(angle), ry2 = cy + r * Math.sin(angle);
+            const style = intColors[res.interaction] || intColors['vdw'];
+            const aaColor = aaTypeColors[res.aatype] || '#94a3b8';
+            const line = mkEl('line', { x1: cx, y1: cy, x2: rx2, y2: ry2, stroke: style.line, 'stroke-width': res.strength > 0.7 ? '2' : '1.2', 'stroke-opacity': '0.8' });
+            if (style.dash) line.setAttribute('stroke-dasharray', style.dash);
+            svg.appendChild(line);
+            const nodeCircle = mkEl('circle', { cx: rx2, cy: ry2, r: 14, fill: style.fill, stroke: aaColor, 'stroke-width': '1.5' });
+            if (res.strength > 0.7) nodeCircle.setAttribute('filter', 'url(#glow)');
+            svg.appendChild(nodeCircle);
+            const lbl1 = mkEl('text', { x: rx2, y: ry2 - 3, 'font-size': '7.5', fill: '#e2e8f0', 'text-anchor': 'middle', 'font-weight': 'bold' });
+            lbl1.textContent = res.name.split('-')[0];
+            svg.appendChild(lbl1);
+            const lbl2 = mkEl('text', { x: rx2, y: ry2 + 7, 'font-size': '6.5', fill: aaColor, 'text-anchor': 'middle' });
+            lbl2.textContent = '-' + res.name.split('-')[1];
+            svg.appendChild(lbl2);
+        });
+        const ligBg = mkEl('ellipse', {cx, cy, rx: 28, ry: 18, fill: 'rgba(37,157,244,0.25)', stroke: '#259df4', 'stroke-width': '2', filter: 'url(#glow)'});
+        svg.appendChild(ligBg);
+        const ligId = mkEl('text', {x: cx, y: cy + 4, 'font-size': '7.5', fill: '#ffffff', 'text-anchor': 'middle', 'font-weight': 'bold'});
+        ligId.textContent = chemblId ? chemblId.replace('CHEMBL','CHBL') : 'Ligand';
+        svg.appendChild(ligId);
     };
 
     (function() {
         let viewer = null;
         let currentProtein = null;
-
         const initViewer = () => {
             if (viewer) return;
             const element = document.getElementById('3dmol-viewer');
-            if (element) {
+            if (element && typeof $3Dmol !== 'undefined') {
                 viewer = $3Dmol.createViewer(element, { backgroundColor: '#0f172a' });
+                console.log("3Dmol viewer initialized.");
             }
         };
-
         const sendMessage = (type, data) => window.parent.postMessage({isStreamlitMessage: true, type, ...data}, "*");
         const Streamlit = {
             setComponentValue: (v) => sendMessage("streamlit:setComponentValue", {value: v}),
@@ -566,244 +463,82 @@
                 if(!args) return;
                 try {
                     const el = (id) => document.getElementById(id);
-                    if(args.table_html && el('candidate-table')) el('candidate-table').innerHTML = args.table_html;
-                    if(args.ai_html && el('ai-chat-output')) el('ai-chat-output').innerHTML = args.ai_html;
-                    
                     const setVal = (id, v) => { const node = el(id); if(node) node.innerText = v; };
                     const setPct = (id, v) => { const node = el(id); if(node) node.style.width = v + '%'; };
+                    
+                    if(args.table_html && el('candidate-table')) el('candidate-table').innerHTML = args.table_html;
+                    if(args.ai_html && el('ai-chat-output')) el('ai-chat-output').innerHTML = args.ai_html;
                     
                     if(args.chrna1_score) setVal('chrna1-score-val', args.chrna1_score);
                     if(args.musk_score) setVal('musk-score-val', args.musk_score);
                     if(args.lrp4_score) setVal('lrp4-score-val', args.lrp4_score);
-                    
                     if(args.chrna1_progress) setPct('chrna1-progress', args.chrna1_progress);
-                    if(args.musk_progress) setPct('musk-progress', args.musk_progress);
-                    if(args.lrp4_progress) setPct('lrp4-progress', args.lrp4_progress);
-
                     if(args.viewer_complex) setVal('viewer-complex-title', args.viewer_complex);
                     if(args.viewer_ligand) setVal('viewer-ligand-label', args.viewer_ligand);
-
-                    // Mechanism Insight updates
                     if(args.mechanism_inference) setVal('mechanism-inference', args.mechanism_inference);
                     if(args.mechanism_coeff) setVal('mechanism-coeff', args.mechanism_coeff);
-                    if(args.mechanism_subtitle) setVal('mechanism-subtitle', args.mechanism_subtitle);
 
-                    // Dynamic Mechanism Insight SVG Graph Update
-                    if (args.mechanism_coeff) {
-                        const coeff = parseFloat(args.mechanism_coeff) || 0.75;
-                        // coeff range [0.5 - 0.99] → signal strength
-                        // Use mechanism_graph_pattern for which nodes are "active"
-                        const graphPattern = args.mechanism_graph_pattern || 'bl-br';
-                        const activeColor = '#259df4';
-                        const inactiveColor = '#315168';
-                        const brightness = Math.round(coeff * 255);
-                        const alphaActive = 0.1 + coeff * 0.5;
-                        const alphaCenter = 0.1 + coeff * 0.6;
-                        const lineW = (1 + coeff * 3).toFixed(1);
+                    if (args.binding_residues) drawBindingDiagram(args.binding_residues, args.mechanism_coeff || '0.8', args.chembl_id || '');
 
-                        // Reset all nodes
-                        ['mech-node-tl','mech-node-tr','mech-node-bl','mech-node-br'].forEach(id => {
-                            const n = el(id);
-                            if(n) {
-                                n.setAttribute('fill', 'rgba(37,157,244,' + (alphaActive * 0.5).toFixed(2) + ')');
-                                n.setAttribute('stroke', inactiveColor);
-                                n.setAttribute('stroke-width', '1');
-                            }
-                        });
-                        ['mech-line-tl','mech-line-tr','mech-line-bl','mech-line-br'].forEach(id => {
-                            const l = el(id);
-                            if(l) { l.setAttribute('stroke', inactiveColor); l.setAttribute('stroke-width', '1'); l.removeAttribute('stroke-dasharray'); l.setAttribute('stroke-dasharray', '4'); }
-                        });
-
-                        // Activate based on pattern
-                        const active = graphPattern.split('-');
-                        active.forEach(side => {
-                            const nid = 'mech-node-' + side;
-                            const lid = 'mech-line-' + side;
-                            const n = el(nid), l = el(lid);
-                            if(n) {
-                                n.setAttribute('fill', 'rgba(37,157,244,' + alphaActive.toFixed(2) + ')');
-                                n.setAttribute('stroke', activeColor);
-                                n.setAttribute('stroke-width', '2');
-                            }
-                            if(l) {
-                                l.setAttribute('stroke', activeColor);
-                                l.setAttribute('stroke-width', lineW);
-                                l.removeAttribute('stroke-dasharray');
-                            }
-                        });
-
-                        // Center node always active, scaled by coeff
-                        const center = el('mech-node-center');
-                        if(center) {
-                            center.setAttribute('r', Math.round(25 + coeff * 15).toString());
-                            center.setAttribute('fill', 'rgba(37,157,244,' + alphaCenter.toFixed(2) + ')');
-                            center.setAttribute('stroke', activeColor);
-                            center.setAttribute('stroke-width', '2');
-                        }
-                    }
-
-                    // RMSD chart path updates
                     const bb = el('rmsd-backbone-path'), lg = el('rmsd-ligand-path');
                     if(bb && args.rmsd_backbone_path) bb.setAttribute('d', args.rmsd_backbone_path);
                     if(lg && args.rmsd_ligand_path) lg.setAttribute('d', args.rmsd_ligand_path);
 
-                    // 3D Rendering Logic
+                    // 3D Rendering
                     if (args.protein_pdb || args.ligand_pdbqt) {
                         initViewer();
                         if (viewer) {
-                            // If protein changed or we are initializing, clear and re-add
-                            if (args.protein_pdb && args.protein_pdb !== currentProtein) {
-                                viewer.clear();
-                                viewer.addModel(args.protein_pdb, "pdb");
-                                viewer.setStyle({model: 0}, { cartoon: { color: 'spectrum', opacity: 0.8 } });
-                                currentProtein = args.protein_pdb;
-                                
+                            try {
+                                el('viewer-error').classList.add('hidden');
+                                if (args.protein_pdb && args.protein_pdb !== currentProtein) {
+                                    viewer.clear();
+                                    viewer.addModel(args.protein_pdb, "pdb");
+                                    viewer.setStyle({model: 0}, { cartoon: { color: 'spectrum', opacity: 0.8 } });
+                                    currentProtein = args.protein_pdb;
+                                }
                                 if (args.ligand_pdbqt) {
+                                    // Remove existing ligand models (starting from model 1)
+                                    // Or just clear and re-add everything for simplicity if it fails
                                     const lModel = viewer.addModel(args.ligand_pdbqt, "pdbqt");
-                                    viewer.setStyle({model: lModel.getID()}, { stick: { colorscheme: 'greenCarbon', radius: 0.2 }, sphere: { radius: 0.4 } });
-                                    viewer.zoomTo({model: lModel.getID()});
+                                    if (lModel) {
+                                        viewer.setStyle({model: lModel.getID()}, { stick: { colorscheme: 'greenCarbon', radius: 0.2 }, sphere: { radius: 0.4 } });
+                                        viewer.zoomTo({model: lModel.getID()});
+                                    }
                                 } else {
                                     viewer.zoomTo();
                                 }
-                            } else if (args.ligand_pdbqt) {
-                                // Protein is same, just update/add ligand
-                                // To remove previous ligand without getModelsByFilter, 
-                                // we can just clear and re-add everything if simpler, 
-                                // but let's try to just clear and re-render if it's not too slow.
-                                viewer.clear();
-                                viewer.addModel(currentProtein, "pdb");
-                                viewer.setStyle({model: 0}, { cartoon: { color: 'spectrum', opacity: 0.8 } });
-                                
-                                const lModel = viewer.addModel(args.ligand_pdbqt, "pdbqt");
-                                viewer.setStyle({model: lModel.getID()}, { stick: { colorscheme: 'greenCarbon', radius: 0.2 }, sphere: { radius: 0.4 } });
-                                viewer.zoomTo({model: lModel.getID()});
+                                viewer.render();
+                            } catch(err3d) { 
+                                console.error("3D Render error:", err3d);
+                                el('viewer-error').classList.remove('hidden');
+                                el('viewer-error-msg').innerText = "3D Render Error: " + err3d.message;
                             }
-                            viewer.render();
+                        } else {
+                            el('viewer-error').classList.remove('hidden');
+                            el('viewer-error-msg').innerText = "Viewer not initialized (check internet connection for 3Dmol.js)";
                         }
+                    } else {
+                        // If no data, show placeholder or error
+                        el('viewer-error').classList.remove('hidden');
+                        el('viewer-error-msg').innerText = "No structural data (PDB/PDBQT) found for this candidate.";
                     }
-
                     Streamlit.setFrameHeight(document.body.scrollHeight);
                 } catch(e) { console.error("Render catch:", e); }
             }
         };
         window.addEventListener("message", (e) => { if (e.data.type === "streamlit:render") Streamlit.onRender(e.data.args); });
         window.addEventListener('load', () => {
+            initViewer();
+            Streamlit.setComponentReady();
+            Streamlit.setFrameHeight(document.body.scrollHeight);
             const el = (id) => document.getElementById(id);
-            const b = el('btn-view-all'); if(b) b.onclick = () => Streamlit.setComponentValue({action: 'view_all_candidates', ts: Date.now()});
-            const s = el('ai-send-btn'), i = el('ai-input');
-            if(s && i) {
-                s.onclick = () => { if(i.value) { Streamlit.setComponentValue({action: 'ai_query', query: i.value, ts: Date.now()}); i.value=''; } };
-                i.onkeypress = (e) => { if(e.key==='Enter') s.click(); };
-            }
-            
+            if(el('btn-view-all')) el('btn-view-all').onclick = () => Streamlit.setComponentValue({action: 'view_all_candidates', ts: Date.now()});
+            if(el('ai-send-btn')) el('ai-send-btn').onclick = () => { const i = el('ai-input'); if(i && i.value) { Streamlit.setComponentValue({action: 'ai_query', query: i.value, ts: Date.now()}); i.value=''; } };
             const table = el('candidate-table');
             if(table) {
                 table.onclick = (e) => {
                     const row = e.target.closest('tr');
-                    if(row && row.dataset.id) {
-                        Streamlit.setComponentValue({action: 'select_candidate', id: row.dataset.id, ts: Date.now()});
-                    }
-                };
-            }
-
-        initViewer();
-            Streamlit.setComponentReady();
-            Streamlit.setFrameHeight(document.body.scrollHeight);
-
-            // ── Animation / Video Player ─────────────────────────────
-            let isPlaying = false;
-            let animationId = null;
-            let simTime = 0;
-            const MAX_TIME = 50;
-
-            const updateTime = () => {
-                const t = el('player-time');
-                if (t) t.innerText = 'TIME: ' + simTime.toFixed(1) + 'ns';
-            };
-
-            const animate = () => {
-                if (!isPlaying) return;
-                simTime += 0.2;
-                if (simTime > MAX_TIME) simTime = 0;
-                updateTime();
-                if (viewer) {
-                    viewer.rotate(1, 'y');
-                    viewer.render();
-                }
-                animationId = requestAnimationFrame(animate);
-            };
-
-            const playBtn = el('btn-play-pause');
-            if (playBtn) {
-                playBtn.onclick = () => {
-                    isPlaying = !isPlaying;
-                    playBtn.innerText = isPlaying ? 'pause_circle' : 'play_circle';
-                    if (isPlaying) animate();
-                    else if (animationId) cancelAnimationFrame(animationId);
-                };
-            }
-
-            const skipPrev = el('btn-skip-prev');
-            if (skipPrev) {
-                skipPrev.onclick = () => {
-                    simTime = Math.max(0, simTime - 5);
-                    updateTime();
-                    if (viewer) { viewer.rotate(-30, 'y'); viewer.render(); }
-                };
-            }
-
-            const skipNext = el('btn-skip-next');
-            if (skipNext) {
-                skipNext.onclick = () => {
-                    simTime = Math.min(MAX_TIME, simTime + 5);
-                    updateTime();
-                    if (viewer) { viewer.rotate(30, 'y'); viewer.render(); }
-                };
-            }
-
-            // ── Toolbar Buttons ─────────────────────────────────────
-            // Camera / Screenshot
-            const screenshotBtn = el('btn-screenshot');
-            if (screenshotBtn) {
-                screenshotBtn.onclick = () => {
-                    if (!viewer) return;
-                    const uri = viewer.pngURI();
-                    const link = document.createElement('a');
-                    link.download = 'mg_complex_snapshot.png';
-                    link.href = uri;
-                    link.click();
-                };
-            }
-
-            // Layers / Style Cycle
-            const styles = ['cartoon', 'surface', 'stick'];
-            let styleIdx = 0;
-            const styleBtn = el('btn-style-cycle');
-            if (styleBtn) {
-                styleBtn.onclick = () => {
-                    if (!viewer || !currentProtein) return;
-                    styleIdx = (styleIdx + 1) % styles.length;
-                    const s = styles[styleIdx];
-                    if (s === 'cartoon') {
-                        viewer.setStyle({model: 0}, { cartoon: { color: 'spectrum', opacity: 0.85 } });
-                    } else if (s === 'surface') {
-                        viewer.setStyle({model: 0}, { surface: { opacity: 0.6, colorscheme: 'greenCarbon' } });
-                    } else {
-                        viewer.setStyle({model: 0}, { stick: { colorscheme: 'Jmol', radius: 0.15 } });
-                    }
-                    viewer.render();
-                    styleBtn.title = '현재: ' + s;
-                };
-            }
-
-            // Zoom to Ligand
-            const zoomBtn = el('btn-zoom-ligand');
-            if (zoomBtn) {
-                zoomBtn.onclick = () => {
-                    if (!viewer) return;
-                    viewer.zoomTo({model: 1});
-                    viewer.render();
+                    if(row && row.dataset.id) Streamlit.setComponentValue({action: 'select_candidate', id: row.dataset.id, ts: Date.now()});
                 };
             }
         });

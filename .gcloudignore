@@ -1,0 +1,41 @@
+# .gcloudignore
+# -----------------------------------------------------------------------------
+# 불필요한 파일 업로드 방지 (빌드 속도 및 보안 향상)
+# -----------------------------------------------------------------------------
+
+# Git
+.git/
+.gitignore
+
+# Python 관련
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 데이터 및 모델 (용량이 크고 로컬 전용인 경우)
+data/
+models/
+results/
+vina_bin/
+
+# 로컬 설정
+.env
+.vscode/
+.idea/
+
+# 로그 및 임시 파일
+*.log
+tmp/
+temp/
+
+# 기동 스크립트
+*.bat
+*.sh
+implementation_plan.md
+research.md
+plan.md
+walkthrough.md
+task.md

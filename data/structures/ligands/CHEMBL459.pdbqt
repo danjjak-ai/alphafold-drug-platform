@@ -1,0 +1,41 @@
+REMARK SMILES C[C@](N)(Cc1ccc(O)c(O)c1)C(=O)O
+REMARK SMILES IDX 1 1 2 2 3 3 4 6 5 7 6 8 12 9 7 10 10 11 8 12 11 13 9 15
+REMARK SMILES IDX 13 17 14 18 15 19
+REMARK H PARENT 3 4 3 5 11 14 9 16 15 20
+ROOT
+ATOM      1  C   UNL     1      -3.357  -0.133   0.495  1.00  0.00     0.041 C 
+ATOM      2  C   UNL     1      -1.928   0.110  -0.009  1.00  0.00     0.115 C 
+ENDROOT
+BRANCH   2   3
+ATOM      3  N   UNL     1      -1.935  -0.131  -1.482  1.00  0.00    -0.316 NA
+ATOM      4  H   UNL     1      -2.514   0.599  -1.906  1.00  0.00     0.119 HD
+ATOM      5  H   UNL     1      -0.997   0.081  -1.832  1.00  0.00     0.119 HD
+ENDBRANCH   2   3
+BRANCH   2   6
+ATOM      6  C   UNL     1      -0.946  -0.842   0.718  1.00  0.00     0.069 C 
+BRANCH   6   7
+ATOM      7  C   UNL     1       0.507  -0.728   0.302  1.00  0.00    -0.042 A 
+ATOM      8  C   UNL     1       1.004  -1.499  -0.760  1.00  0.00     0.008 A 
+ATOM      9  C   UNL     1       1.372   0.154   0.967  1.00  0.00     0.054 A 
+ATOM     10  C   UNL     1       2.338  -1.385  -1.160  1.00  0.00     0.050 A 
+ATOM     11  C   UNL     1       2.703   0.266   0.564  1.00  0.00     0.157 A 
+ATOM     12  C   UNL     1       3.183  -0.500  -0.497  1.00  0.00     0.157 A 
+BRANCH  11  13
+ATOM     13  O   UNL     1       3.546   1.130   1.205  1.00  0.00    -0.504 OA
+ATOM     14  H   UNL     1       3.069   1.551   1.937  1.00  0.00     0.293 HD
+ENDBRANCH  11  13
+BRANCH  12  15
+ATOM     15  O   UNL     1       4.489  -0.375  -0.879  1.00  0.00    -0.504 OA
+ATOM     16  H   UNL     1       4.667  -0.994  -1.602  1.00  0.00     0.293 HD
+ENDBRANCH  12  15
+ENDBRANCH   6   7
+ENDBRANCH   2   6
+BRANCH   2  17
+ATOM     17  C   UNL     1      -1.575   1.578   0.308  1.00  0.00     0.323 C 
+ATOM     18  O   UNL     1      -1.358   2.051   1.414  1.00  0.00    -0.250 OA
+BRANCH  17  19
+ATOM     19  O   UNL     1      -1.550   2.378  -0.783  1.00  0.00    -0.480 OA
+ATOM     20  H   UNL     1      -1.309   3.259  -0.427  1.00  0.00     0.296 HD
+ENDBRANCH  17  19
+ENDBRANCH   2  17
+TORSDOF 7
