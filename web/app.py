@@ -95,33 +95,36 @@ def load_data(limit=10):
 
 def get_docking_data(chembl_id):
     import glob
-    # 1. Search in various possible locations (priority: demo_assets > results)
+    # Use absolute paths for Cloud Run consistency
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
+    # Priority search for ligand pdbqt
     search_patterns = [
+        os.path.join(base_dir, "results", "docking", f"*_{chembl_id}_out.pdbqt"),
         os.path.join(base_dir, "web", "demo_assets", "results", "docking", f"*_{chembl_id}_out.pdbqt"),
-        os.path.join(base_dir, "results", "docking", f"*_{chembl_id}_out.pdbqt")
     ]
     
-    files = []
+    file_path = None
     for p in search_patterns:
         files = glob.glob(p)
-        if files: break
+        if files:
+            file_path = files[0]
+            break
         
-    if not files:
-        print(f"[app] PDBQT NOT FOUND for {chembl_id}")
+    if not file_path:
+        print(f"[app] PDBQT NOT FOUND for {chembl_id} in {search_patterns}")
         return None, None, None
     
-    file_path = files[0]
     target_part = os.path.basename(file_path).split('_')[0].lower()
     
     with open(file_path, "r") as f:
         pdbqt = f.read()
     
-    # 2. Protein mapping (priority: demo_assets > data)
+    # Protein mapping
     protein_filename = "7ql6_raw.pdb" if "chrna1" in target_part else "8s9p_raw.pdb"
     protein_paths = [
-        os.path.join(base_dir, "web", "demo_assets", "data", "structures", "targets", protein_filename),
-        os.path.join(base_dir, "data", "structures", "targets", protein_filename)
+        os.path.join(base_dir, "data", "structures", "targets", protein_filename),
+        os.path.join(base_dir, "web", "demo_assets", "data", "structures", "targets", protein_filename)
     ]
     
     protein_pdb = ""
@@ -132,7 +135,7 @@ def get_docking_data(chembl_id):
             break
             
     if not protein_pdb:
-        print(f"[app] PROTEIN PDB NOT FOUND for {target_part}")
+        print(f"[app] PROTEIN PDB NOT FOUND for {target_part} in {protein_paths}")
             
     return target_part.upper(), protein_pdb, pdbqt
 

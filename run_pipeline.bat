@@ -47,6 +47,13 @@ echo  [11] AI 모델 학습
 echo ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 echo.
 
+set /p DISEASE="Enter disease name in English (e.g., Alzheimer): "
+if "%DISEASE%"=="" (
+    echo [ERROR] Disease name cannot be empty.
+    pause
+    exit /b 1
+)
+
 set /p CONFIRM="전체 파이프라인을 실행하시겠습니까? (y/N): "
 if /i not "%CONFIRM%"=="y" (
     echo [INFO] 취소되었습니다.
@@ -63,15 +70,15 @@ echo [OK] Step 1 완료
 
 :: ── Step 2: 타겟 단백질 데이터 수집 ─────────────────
 echo.
-echo [2/11] 타겟 단백질 데이터 수집 중...
-python scripts/fetch_targets.py
+echo [2/11] 타겟 단백질 데이터 수집 중... (질환: %DISEASE%)
+python scripts/fetch_targets.py "%DISEASE%"
 if %ERRORLEVEL% neq 0 ( echo [ERROR] Step 2 실패: fetch_targets.py & goto :FAILED )
 echo [OK] Step 2 완료
 
 :: ── Step 3: 약물 데이터 수집 ─────────────────────────
 echo.
-echo [3/11] 약물 (ChEMBL) 데이터 수집 중...
-python scripts/fetch_drugs.py
+echo [3/11] 약물 (ChEMBL) 데이터 수집 중... (질환: %DISEASE%)
+python scripts/fetch_drugs.py "%DISEASE%"
 if %ERRORLEVEL% neq 0 ( echo [ERROR] Step 3 실패: fetch_drugs.py & goto :FAILED )
 echo [OK] Step 3 완료
 

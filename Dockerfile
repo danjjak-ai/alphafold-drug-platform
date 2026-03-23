@@ -32,7 +32,7 @@ RUN python web/inject_js.py
 
 # Seed demo data into the database at build time
 # This ensures Cloud Run has data without requiring the full pipeline
-RUN mkdir -p data && python scripts/seed_demo_data.py
+RUN mkdir -p data results/docking && python scripts/seed_demo_data.py
 
 # Expose Streamlit port
 EXPOSE 8080
