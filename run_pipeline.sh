@@ -72,6 +72,20 @@ if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
     exit 0
 fi
 
+# 질환명 입력 처리
+DISEASE=""
+if [ -n "$1" ]; then
+    DISEASE="$1"
+    echo -e "${CYAN}[INFO] 질환명 파라미터 감지: ${BOLD}$DISEASE${NC}"
+else
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo " 특정 질환에 대한 타겟 및 약물 데이터를 수집할 수 있습니다."
+    echo " (영문 질환명을 입력하거나, 건너뛰려면 Enter를 누르세요)"
+    echo " 예: Alzheimer, Diabetes, Cancer"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    read -r -p "질환명 (English): " DISEASE
+fi
+
 # 가상환경 활성화
 echo -e "${GREEN}[INFO] 가상환경 활성화 중...${NC}"
 source .venv/bin/activate
@@ -81,17 +95,23 @@ run_step() {
     local STEP_NUM=$1
     local STEP_DESC=$2
     local SCRIPT=$3
+    shift 3
+    local EXTRA_ARGS="$@"
 
     echo ""
     echo -e "${CYAN}[$STEP_NUM/11] $STEP_DESC${NC}"
-    python "$SCRIPT"
+    if [ -n "$EXTRA_ARGS" ]; then
+        python "$SCRIPT" "$EXTRA_ARGS"
+    else
+        python "$SCRIPT"
+    fi
     echo -e "${GREEN}[OK] Step $STEP_NUM 완료${NC}"
 }
 
 # ── 파이프라인 실행 ──────────────────────────────
 run_step 1  "DB 초기화"                       scripts/init_db.py
-run_step 2  "타겟 단백질 데이터 수집"          scripts/fetch_targets.py
-run_step 3  "약물 (ChEMBL) 데이터 수집"       scripts/fetch_drugs.py
+run_step 2  "타겟 단백질 데이터 수집"          scripts/fetch_targets.py "$DISEASE"
+run_step 3  "약물 (ChEMBL) 데이터 수집"       scripts/fetch_drugs.py   "$DISEASE"
 run_step 4  "학습 데이터 수집"                 scripts/fetch_training_data.py
 run_step 5  "타겟 단백질 구조 전처리"          scripts/prepare_targets.py
 run_step 6  "리간드 구조 전처리"               scripts/prepare_ligands.py
