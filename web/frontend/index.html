@@ -43,7 +43,7 @@
 <div class="flex items-center gap-8">
 <div class="flex items-center gap-3 text-primary">
 <span class="material-symbols-outlined text-3xl">biotech</span>
-<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight">MG Discovery Core</h2>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight">Discovery Core</h2>
 </div>
 <label class="flex flex-col min-w-40 h-10 max-w-64">
 <div class="flex w-full flex-1 items-stretch rounded-lg h-full bg-slate-100 dark:bg-slate-800/50">
@@ -235,6 +235,9 @@
 </div>
 </div>
 <div class="absolute top-4 right-4 z-10 flex flex-col gap-2">
+<button id="btn-fullscreen-complex" title="전체화면" class="w-8 h-8 rounded bg-background-dark/80 border border-slate-700 flex items-center justify-center hover:bg-primary transition-colors">
+<span class="material-symbols-outlined text-lg">fullscreen</span>
+</button>
 <button id="btn-screenshot" title="스크린샷" class="w-8 h-8 rounded bg-background-dark/80 border border-slate-700 flex items-center justify-center hover:bg-primary transition-colors">
 <span class="material-symbols-outlined text-lg">videocam</span>
 </button>
@@ -598,6 +601,75 @@
             }
             if(el('btn-zoom-ligand')) {
                 el('btn-zoom-ligand').onclick = () => { if(viewer) viewer.zoomTo({model: -1}); };
+            }
+            if(el('btn-fullscreen-complex')) {
+                el('btn-fullscreen-complex').onclick = () => {
+                    const c = el('3dmol-viewer').parentElement;
+                    if (!document.fullscreenElement) {
+                        if (c.requestFullscreen) c.requestFullscreen();
+                        else if (c.webkitRequestFullscreen) c.webkitRequestFullscreen();
+                        else if (c.msRequestFullscreen) c.msRequestFullscreen();
+                        el('btn-fullscreen-complex').querySelector('span').innerText = 'fullscreen_exit';
+                    } else {
+                        if (document.exitFullscreen) document.exitFullscreen();
+                        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                        else if (document.msExitFullscreen) document.msExitFullscreen();
+                        el('btn-fullscreen-complex').querySelector('span').innerText = 'fullscreen';
+                    }
+                };
+            }
+
+            // Simulation Playback Logic (Dummy implementation for visual feedback)
+            let playbackTimer = null;
+            let currentTime = 0.0;
+            const maxTime = 50.0;
+            let isPlaying = false;
+            
+            const updateTimeDisplay = () => {
+                if (el('player-time')) {
+                    el('player-time').innerText = `TIME: ${currentTime.toFixed(1)}ns`;
+                }
+            };
+
+            const togglePlayback = () => {
+                const btn = el('btn-play-pause');
+                if (isPlaying) {
+                    clearInterval(playbackTimer);
+                    isPlaying = false;
+                    if (btn) btn.innerText = 'play_circle';
+                } else {
+                    if (currentTime >= maxTime) currentTime = 0.0;
+                    isPlaying = true;
+                    if (btn) btn.innerText = 'pause_circle';
+                    playbackTimer = setInterval(() => {
+                        currentTime += 0.5;
+                        if (currentTime >= maxTime) {
+                            currentTime = maxTime;
+                            togglePlayback();
+                        }
+                        updateTimeDisplay();
+                    }, 50); // Speed: 10 times per sec (5ns per sec)
+                }
+                updateTimeDisplay();
+            };
+
+            if (el('btn-play-pause')) {
+                el('btn-play-pause').onclick = togglePlayback;
+            }
+            
+            if (el('btn-skip-prev')) {
+                el('btn-skip-prev').onclick = () => {
+                    currentTime = 0.0;
+                    if (!isPlaying) updateTimeDisplay();
+                };
+            }
+
+            if (el('btn-skip-next')) {
+                el('btn-skip-next').onclick = () => {
+                    currentTime = maxTime;
+                    if (isPlaying) togglePlayback();
+                    else updateTimeDisplay();
+                };
             }
 
             initViewer();

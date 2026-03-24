@@ -5,7 +5,7 @@ import os
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="MG Discovery Core",
+    page_title="Discovery Core",
     page_icon="🧬",
     layout="wide",
     initial_sidebar_state="collapsed",
