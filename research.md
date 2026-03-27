@@ -73,12 +73,12 @@
 
 ### 2.4 보조 표적 (Secondary Targets) – 연구 범위 확장 권고
 
-| 단백질 | 역할 | 재창출 근거 | 우선순위 |
-|---|---|---|---|
-| FcRn (FCGRT) | IgG 항체 재활용 수용체 | FcRn 차단 → 자가항체(AChR-IgG) 반감기 단축. Efgartigimod 기전과 동일 | ★★★★★ |
-| C5 보체 | 보체 최종 경로 활성화 | Eculizumab 표적. 소분자 C5 억제제 재창출 탐색 가능 | ★★★★☆ |
-| Rapsyn (RAPSN) | AChR 클러스터링 단백질 | Rapsyn-AChR 결합 강화 소분자 → NMJ 안정화 | ★★★☆☆ |
-| Dok-7 (DOK7) | MuSK 키나제 기질 | Dok-7 과발현이 MG 모델에서 치료 효과 입증됨 | ★★★☆☆ |
+| 단백질 | 역할 | 재창출 근거 | 우선순위 | 현재 코드베이스 상태 |
+|---|---|---|---|---|
+| FcRn (FCGRT) | IgG 항체 재활용 수용체 | FcRn 차단 → 자가항체 반감기 단축 | ★★★★★ | 분석 라이브러리 포함 (준비 중) |
+| C5 보체 | 보체 최종 경로 활성화 | Eculizumab 표적. 소분자 C5 억제제 탐색 | ★★★★☆ | 분석 라이브러리 포함 (준비 중) |
+| Rapsyn (RAPSN) | AChR 클러스터링 단백질 | Rapsyn-AChR 결합 강화 소분자 | ★★★☆☆ | **구현 완료** (scripts/fetch_targets.py) |
+| Dok-7 (DOK7) | MuSK 키나제 기질 | Dok-7 과발현 치료 효과 입증 | ★★★☆☆ | **구현 완료** (scripts/fetch_targets.py) |
 | BAFF/APRIL | B세포 생존 사이토카인 | 자가항체 생성 B세포 제거 전략 | ★★★☆☆ |
 
 ---

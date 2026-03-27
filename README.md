@@ -5,6 +5,7 @@
 # 🧬 Discovery Core (RareTarget Discovery)
 
 ### AI-Powered Drug Repurposing Platform for Rare Neuromuscular Disease
+**중증근무력증(MG) 치료제 재창출을 위한 AI 시뮬레이션 및 데이터 파이프라인**
 
 **[한국어](#-한국어) · [English](#-english) · [日本語](#-日本語)**
 
@@ -22,29 +23,73 @@
 
 # 🇰🇷 한국어
 
-## 📖 개요
+## 📖 프로젝트 배경 (Research)
+**Discovery Core**는 희귀 신경근 자가면역 질환인 **중증근무력증(Myasthenia Gravis, MG)**의 치료제 개발을 가속화하기 위해 제약 지식과 IT 기술을 결합한 플랫폼입니다.
 
-**Discovery Core**는 중증근무력증(Myasthenia Gravis)과 같은 희귀 신경근 질환(Neuromuscular Autoimmune Disease, NAD) 치료를 위한 **약물 재창출(Drug Repurposing)** 후보를 발굴하는 AI 통합 플랫폼입니다. 
+### 1. 질환 개요
+중증근무력증은 신경근 접합부(NMJ)에서 자가항체에 의해 신호 전달이 차단되어 발생하는 질환입니다. 안검하수, 사지 근력 약화 등을 초래하며, 약 10~15%의 환자는 기존 치료제에 반응하지 않는 **치료 저항성(Refractory MG)**을 보입니다. 본 프로젝트는 이러한 미충족 의료 수요를 해결하기 위해 이미 안전성이 검증된 FDA 승인 약물 중에서 새로운 기전을 찾는 **약물 재창출(Drug Repurposing)** 전략을 채택합니다.
 
-기존의 10년 이상 걸리는 신약 개발 과정을 효율화하여, 이미 안전성이 검증된 FDA 승인 약물 중에서 새로운 타겟 단백질(CHRNA1, MuSK, LRP4 등)에 결합하는 최적의 후보를 AI가 예측하고 시뮬레이션합니다.
+### 2. 핵심 생물학적 표적 (Molecular Targets)
+- **CHRNA1 (AChR α1)**: 자가항체의 주요 타겟으로, 수용체 분해를 막고 이온 채널 개방을 안정화하는 약물을 탐색합니다.
+- **MuSK (Muscle-Specific Kinase)**: NMJ 형성에 필수적인 효소로, MuSK-양성 MG 환자를 위해 키나제 활성화를 유도하는 조절제를 찾습니다.
+- **LRP4**: MuSK와 상호작용하여 신호를 복합체화하는 수용체입니다.
 
-> ⚠️ **본 플랫폼은 순수 In Silico 연구 도구입니다.** 임상적 판단이나 진단 목적으로 사용할 수 없습니다.
+---
 
-## 🚀 주요 기능
+## 🚀 주요 기능 및 시스템 아키텍처 (Technical)
+본 플랫폼은 데이터 수집부터 AI 모델링, 시각화까지 전 과정을 자동화한 엔드투엔드 파이프라인을 제공합니다.
 
-- **🧬 단백질 구조 예측**: ESMFold 및 AlphaFold2를 활용한 정밀한 3D 단백질 구조 빔 생성.
-- **💊 약물 라이브러리 자동화**: ChEMBL API를 통해 FDA 승인 약물 데이터를 실시간 수집 및 전처리.
-- **⚙️ 가상 스크리닝**: AutoDock Vina를 이용한 대규모 병렬 도킹 시뮬레이션.
-- **🤖 AI 활성 예측**: EGNN(E(3)-equivariant Graph Neural Networks) 및 DeepPurpose를 통한 약물-표적 활성 예측.
-- **🖥️ 인터랙티브 대시보드**: Streamlit과 React 기반의 3D 분자 뷰어, MD 시뮬레이션 결과 분석, LLM RAG 기반 기전 설명.
+### 🛠️ 기술 스택
+- **Cheminformatics**: RDKit (분자 전처리), Meeko (PDBQT 변환), ChEMBL API (데이터 소스)
+- **AI/ML 모델링**: PyTorch, PyTorch Geometric, DeepChem (GCN, EGNN 기반 활성 예측)
+- **Simulation**: AutoDock Vina 1.2.5 (Batch 도킹), MDAnalysis (`미구현`)
+- **Frontend/UI**: Streamlit, Tailwind CSS (UI 디자인), 3Dmol.js (3D 분자 렌더링)
+- **Infrastructure**: **uv** (Package Manager), Docker, Google Cloud Run
 
-## 🛠️ 설치 및 환경 설정
+---
 
-본 프로젝트는 최신 파이썬 패키지 매니저인 **uv**를 표준으로 사용합니다.
+## 💻 시스템 요구사항 (Requirement)
+본 플랫폼은 로컬 환경에서의 구동을 위해 최적화되었습니다.
 
-### 1. 가상환경 구축
+| 구분 | 최소 사양 | 권장 사양 |
+|---|---|---|
+| **GPU** | NVIDIA GPU 8GB VRAM | NVIDIA RTX 3090/4090 24GB |
+| **RAM** | 32 GB | 64 GB 이상 |
+| **OS** | Windows 10/11 (uv 필수) | Ubuntu 22.04 LTS |
+
+---
+
+## 🧬 전체 데이터 파이프라인 (Execution)
+일관된 결과를 위해 다음 단계로 스크리닝을 진행합니다 (`run_pipeline.bat` 사용 시 자동화):
+
+1.  **DB 초기화**: SQLite DB(`mg_discovery.db`) 스키마 생성.
+2.  **타겟 및 약물 수집**: UniProt 및 ChEMBL API를 통해 질환 관련 데이터 수집.
+3.  **구조 예측 (`predict_structures.py`)**: ESMFold 및 AlphaFold2를 활용한 3D 단백질 구조 생성.
+4.  **전처리**: 리간드(LIG) 및 수용체(REC)의 .pdbqt 변환.
+5.  **가상 스크리닝 (`run_docking.py`)**: AutoDock Vina를 이용한 대규모 병렬 도킹.
+6.  **AI 활성 예측**: 도킹 결과를 기반으로 GCN 모델을 통한 복합체 활성 예측.
+7.  **대시보드 분석**: Streamlit 기반의 인터랙티브 결과 웹 앱 실행.
+
+---
+
+## 🗺️ 로드맵 및 구현 상태 (Status)
+
+| Phase | 마일스톤 | 현 상태 | 비고 |
+|---|---|---|---|
+| **Phase 1** | 데이터 파이프라인 구축 | **완료** | ChEMBL/UniProt 연동 및 DB화 |
+| **Phase 2** | 가상 스크리닝 시스템 | **완료** | Vina Batch 도킹 및 3D 뷰어 |
+| **Phase 3** | AI 활성 예측 모델 | **진행 중** | GCN/RF 모델 기반 활성 추론 |
+| **Phase 4** | LLM RAG 기반 기전 설명 | **미구현** | LangChain/ChromaDB 연동 예정 |
+| **Phase 5** | MM-GBSA 정밀 재채점 | **미구현** | AmberTools 기반 스코어 보정 예정 |
+| **Phase 6** | 최종 결과 보고서 자동화 | **미구현** | PDF 및 분석 리포트 생성 기능 |
+
+---
+
+## 🛠️ 설치 및 실행 (Installation)
+
+### 1. 환경 설정
 ```bash
-# uv 설치 (이미 있다면 생략)
+# uv 설치 (https://astral.sh/uv)
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # 가상환경 생성 및 패키지 설치
@@ -52,35 +97,13 @@ uv venv .venv
 uv pip install -r requirements.txt
 ```
 
-### 2. AutoDock Vina 바이너리 설정
-- **Windows**: `scripts/vina.exe`가 포함되어 있습니다.
-- **Linux/macOS**: `vina_bin/` 폴더 내에 해당 OS용 바이너리를 준비하고 실행 권한을 부여하세요.
-
-## 🧬 전체 데이터 파이프라인
-
-일관된 결과를 위해 다음 순서로 스크리닝을 진행합니다 (또는 `run_pipeline.bat` 사용):
-
-1. **DB 초기화**: `python scripts/init_db.py`
-2. **타겟 수집 (UniProt)**: `python scripts/fetch_targets.py "Myasthenia Gravis"`
-3. **약물 수집 (ChEMBL)**: `python scripts/fetch_drugs.py "Myasthenia Gravis"`
-4. **학습 데이터 수집**: `python scripts/fetch_training_data.py`
-5. **구조 예측**: `python scripts/predict_structures.py` (AlphaFold 사용 시)
-6. **타겟 전처리**: `python scripts/prepare_targets.py`
-7. **리간드 전처리**: `python scripts/prepare_ligands.py`
-8. **도킹 시뮬레이션**: `python scripts/run_docking.py`
-9. **결과 분석**: `python scripts/post_docking_analysis.py`
-10. **활성 예측**: `python scripts/predict_activity.py`
-
-## 🖥️ 대시보드 실행
-
-시뮬레이션이 완료되면 다음 명령으로 분석 대시보드를 실행할 수 있습니다.
-
+### 2. 실행
 ```bash
-# Windows
-start_dashboard.bat
+# 전체 파이프라인 실행 (Windows)
+run_pipeline.bat
 
-# Linux / macOS
-chmod +x start_dashboard.sh && ./start_dashboard.sh
+# 대시보드만 실행
+start_dashboard.bat
 ```
 접속 URL: **http://localhost:8501**
 
@@ -89,58 +112,42 @@ chmod +x start_dashboard.sh && ./start_dashboard.sh
 # 🇺🇸 English
 
 ## 📖 Overview
-
-**Discovery Core** is an AI-integrated platform for identifying **drug repurposing** candidates for rare neuromuscular autoimmune diseases (NAD) such as Myasthenia Gravis. By leveraging deep learning and high-throughput molecular docking, we accelerate the discovery of novel therapeutic uses for existing FDA-approved drugs.
+**Discovery Core** is an integrated platform designed to accelerate **drug repurposing** for rare neuromuscular diseases, specifically Myasthenia Gravis (MG). By combining pharmaceutical expertise with cutting-edge AI, we explore the potential of existing FDA-approved drugs against novel targets like **CHRNA1**, **MuSK**, and **LRP4**.
 
 ## 🚀 Key Features
+- **In Silico Screening**: Batch molecular docking using AutoDock Vina.
+- **AI-Based Prediction**: Activity inference using GCN (Graph Convolutional Networks).
+- **Interactive UI**: High-fidelity 3D visualization using 3Dmol.js and Tailwind CSS.
+- **Workflow Automation**: Full data pipeline from protein structure prediction to analytics.
 
-*   **Structure Prediction**: Predict high-fidelity 3D protein structures using ESMFold and AlphaFold2.
-*   **Automated Library**: Dynamic collection of FDA-approved compounds via ChEMBL API.
-*   **Virtual Screening**: Scale-out batch docking simulations with AutoDock Vina.
-*   **AI Inference**: Activity prediction using EGNN (Equivariant GNN) and DeepPurpose models.
-*   **Interactive UI**: Next-gen dashboard featuring 3D viewers, MD simulation analysis, and LLM-powered biological insights.
-
-## 🛠️ Installation
-
-```bash
-# Install dependencies with uv
-uv venv .venv
-# Activate .venv and install
-uv pip install -r requirements.txt
-```
-
-## 🧬 Pipeline Workflow
-
-Run the full automated pipeline via `run_pipeline.bat` (Windows) or `./run_pipeline.sh` (Linux). The internal steps involve:
-1. DB Initialization -> 2. Target/Drug Fetching -> 3. Structure Preparation -> 4. Batch Docking -> 5. AI Activity Scrambling -> 6. Dashboard Visualization.
+## 🗺️ Implementation Roadmap
+- [x] **Phase 1**: Data Pipeline (ChEMBL, UniProt, SQLite)
+- [x] **Phase 2**: Virtual Screening (AutoDock Vina)
+- [x] **Phase 3**: AI Activity Scoring (Baseline GCN implemented)
+- [ ] **Phase 4**: LLM-Powered Biological Insights (RAG System - **Unimplemented**)
+- [ ] **Phase 5**: MM-GBSA Precision Rescoring (**Unimplemented**)
+- [ ] **Phase 6**: Automated Analytical Reporting (**Unimplemented**)
 
 ---
 
 # 🇯🇵 日本語
 
 ## 📖 概要
-
-**Discovery Core** は、重症筋無力症（Myasthenia Gravis）などの希少神経筋疾患の治療を目的とした **ドラッグリパーパシング（既存薬再開発）** 探索プラットフォームです。AI と大規模シミュレーションを活用し、臨床的に安全性が証明された承認薬の中から、新しい標的タンパク質に作用する候補薬を効率的に特定します。
+**Discovery Core** は、希少神経筋疾患（主に重症筋無力症）に対する **既存薬再開発（ドラッグリパーパシング）** を加速させるための AI 統合プラットフォームです。
 
 ## 🚀 主な機能
+- **仮想スクリーニング**: AutoDock Vina による大規模ドッキングシミュレーション。
+- **AI 活性予測**: GCN（グラフニューラルネットワーク）を用いた相互作用解析。
+- **インタラクティブ分析**: Streamlit と 3Dmol.js を活用した解析ダ미ボード。
 
-*   **構造予測**: ESMFold および AlphaFold2 による高精度な 3D タンパク質構造生成。
-*   **ライブラリ自動構築**: ChEMBL API を利用した FDA 承認薬データの動的収集。
-*   **バーチャルスクリーニング**: AutoDock Vina による大規模なバッチドッキング。
-*   **AI 活性予測**: EGNN（同変グラフニューラルネットワーク）を用いた相互作用解析。
-*   **分析ダッシュボード**: 3D 分子ビューワー、MD シミュレーション解析、LLM を活用した機序説明。
-
-## 🛠️ セットアップ
-
-```bash
-uv venv .venv
-uv pip install -r requirements.txt
-```
+## 🗺️ 実装ステータス
+- [x] **Phase 1~2**: データ収集およびドッキング（実装済み）
+- [x] **Phase 3**: AI 予測モデル（ベースライン実装済み）
+- [ ] **Phase 4~6**: LLM RAG システム、MM-GBSA 精密計算、自動レポート（**未実装**）
 
 ---
 
 ## 📂 Project Structure
-
 ```
 alphafold-drug-platform/
 ├── 📂 data/               # Raw/Processed data, structures, and SQLite DB
@@ -152,4 +159,8 @@ alphafold-drug-platform/
 ```
 
 ## 📜 License
-Released under the [MIT License](LICENSE). Accelerating open science for rare diseases.
+Released under the [MIT License](LICENSE).
+<br>
+*Copyright (c) 2026 Danjjak-AI Team. Accelerating open science for rare diseases.*
+
+</div>

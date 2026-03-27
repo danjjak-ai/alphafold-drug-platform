@@ -73,12 +73,12 @@
 
 ---
 
-## 7. RAG / LLM / 벡터 DB
+## 7. RAG / LLM / 벡터 DB (구현 예정)
 
 | 구분 | 현재 사용 | 버전 | 용도 | 연결 방식 | 동일 기능 대안 |
 |------|-----------|------|------|----------|----------------|
-| **LLM 오케스트레이션** | LangChain | ≥0.1.x (`langchain`, `langchain-community`) | LLM 체인, RAG 파이프라인, 프롬프트 관리 | PyPI | LlamaIndex, Haystack, Semantic Kernel |
-| **벡터 데이터베이스** | ChromaDB | ≥0.4.x (`chromadb`) | 연구 문서 임베딩 저장·검색 | PyPI / 로컬 SQLite 기반 | Qdrant, Weaviate, Pinecone, Milvus, FAISS |
+| **LLM 오케스트레이션** | LangChain | ≥0.1.x | (도입 예정) 연구 문서 RAG | PyPI | LlamaIndex, Haystack |
+| **벡터 데이터베이스** | ChromaDB | ≥0.4.x | (도입 예정) 임베딩 저장 | PyPI | Qdrant, FAISS |
 
 ---
 

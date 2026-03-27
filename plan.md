@@ -13,10 +13,10 @@
 | GPU | NVIDIA GPU 8GB VRAM (ESMFold 단량체) | NVIDIA RTX 3090/4090 24GB | ESMFold 전장 단백질 예측 필수. CPU 실행 시 수십 배 느림 |
 | RAM | 32 GB | 64 GB 이상 | AutoDock Vina 배치 처리, RDKit 2500개 화합물 동시 처리 |
 | 저장공간 | 50 GB SSD | 200 GB NVMe SSD | 모델 체크포인트(~15GB), PDB 파일, SQLite DB 포함 |
-| OS | Ubuntu 20.04 LTS | Ubuntu 22.04 LTS | Windows WSL2 가능하나 GPU 패스스루 설정 필요. macOS 미권장 |
-| Python | 3.9+ | 3.10 (권장) | PyTorch, RDKit, DeepChem 호환성 기준 |
-| Docker | Docker 20.10+ | Docker Compose v2 포함 | 격리 실행 환경 구성 권장 |
-| 인터넷 | API 호출 시 필요 | - | 초기 데이터 수집 및 모델 체크포인트 다운로드에만 필요 |
+| OS | Windows 10/11 | Ubuntu 22.04 LTS | Windows 환경에서 uv 사용 권장 |
+| Package Manager | uv | ghcr.io/astral-sh/uv | 고속 패키지 관리 및 격리된 venv 환경 보장 |
+| Python | 3.10 | 3.10 | PyTorch, RDKit 호환성 기반 |
+| 인터넷 | 초기 실행 시 필요 | - | 초기 데이터 수집 및 모델 체크포인트 다운로드에만 필요 |
 
 > ⚠ **주의:** GPU VRAM이 8GB 미만인 경우, ESMFold를 ColabFold (Google Colab 무료 GPU)에서 실행하고 .pdb 파일만 로컬로 다운로드하는 하이브리드 전략을 대안으로 채택할 것.
 
@@ -278,18 +278,16 @@ mg_repurposing/
 | EGNN 구현 복잡도 초과로 일정 지연 | 높음 | 중간 | DeepPurpose로 베이스라인 먼저 확보, EGNN은 별도 R&D 브랜치 분리 |
 | 파이프라인 재현 불가 (seed, 버전 불일치) | 중간 | 높음 | DVC + Docker + MLflow 조합으로 완전 재현 환경 구축 |
 
-### 6.2 전체 일정 요약
+### 6.2 전체 프로젝트 구현 현황 요약 (Status)
 
-| Phase | 기간 | 핵심 마일스톤 | 담당 역할 |
+| Phase | 마일스톤 | 현 상태 | 구현 항목 |
 |---|---|---|---|
-| Phase 0: 설계 | 3~5일 | DB 스키마 확정, 환경 검증, 대조군 선정 | IT 리드 + 제약 전문가 |
-| Phase 1: 환경/데이터 | 1~2주 | DB 구축 완료, 2,000+ 화합물 수집 완료 | IT 리드 |
-| Phase 2: 구조/도킹 | 2~3주 | 3개 표적 구조 예측 완료, 도킹 배치 완료, 히트 목록 생성 | 계산화학 담당 |
-| Phase 3: AI 모델 | 2~4주 | DeepPurpose 베이스라인 AUROC > 0.75, EGNN 개발 착수 | ML 엔지니어 |
-| Phase 4: 대시보드 | 1~2주 | Streamlit 앱 전 페이지 기능 동작, LLM RAG 쿼리 정상 응답 | 풀스택 개발자 |
-| Phase 5: 검증/보고 | 1~2주 | 양성 대조군 도킹 검증 통과, PDF 보고서 완성 | 전체 |
-| Phase 6: 위험 관리 | 상시 | 주간 위험 리뷰 미팅, 이슈 트래킹 | PM |
-| **총 기간** | **9~16주** | **전체 프로토타입 완성 및 결과 보고서 배포** | **-** |
+| Phase 1 | 환경/데이터 파이프라인 | **완료** | `fetch_targets.py`, `fetch_drugs.py`, `init_db.py` |
+| Phase 2 | 구조 예측 및 1차 도킹 | **완료** | `predict_structures.py`, `run_docking.py`, `vina_bin/` |
+| Phase 3 | AI 활성 예측 모델 | **완료** | `train_ai_model.py`, `predict_activity.py` |
+| Phase 4 | 분석 대시보드 | **부분 완료** | `web/app.py` (LLM RAG - **미구현**) |
+| Phase 5 | 정밀 검증 (MM-GBSA) | **미구현** | AmberTools 기반 재채점 파이프라인 |
+| Phase 6 | 결과 보고서 자동화 | **미구현** | PDF 리포트 생성 스크립트 |
 
 ---
 
