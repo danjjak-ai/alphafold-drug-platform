@@ -5,7 +5,7 @@
 # 🧬 Discovery Core (RareTarget Discovery)
 
 ### AI-Powered Drug Repurposing Platform for Rare Neuromuscular Disease
-**중증근무력증(MG) 치료제 재창출을 위한 AI 시뮬레이션 및 데이터 파이프라인**
+**AI-driven screening and data pipeline for Myasthenia Gravis (MG) drug discovery.**
 
 **[한국어](#-한국어) · [English](#-english) · [日本語](#-日本語)**
 
@@ -46,16 +46,12 @@
 - **Frontend/UI**: Streamlit, Tailwind CSS (UI 디자인), 3Dmol.js (3D 분자 렌더링)
 - **Infrastructure**: **uv** (Package Manager), Docker, Google Cloud Run
 
----
-
-## 💻 시스템 요구사항 (Requirement)
-본 플랫폼은 로컬 환경에서의 구동을 위해 최적화되었습니다.
-
+### 💻 시스템 요구사항
 | 구분 | 최소 사양 | 권장 사양 |
 |---|---|---|
 | **GPU** | NVIDIA GPU 8GB VRAM | NVIDIA RTX 3090/4090 24GB |
 | **RAM** | 32 GB | 64 GB 이상 |
-| **OS** | Windows 10/11 (uv 필수) | Ubuntu 22.04 LTS |
+| **OS** | Windows 10/11 | Ubuntu 22.04 LTS |
 
 ---
 
@@ -78,53 +74,64 @@
 |---|---|---|---|
 | **Phase 1** | 데이터 파이프라인 구축 | **완료** | ChEMBL/UniProt 연동 및 DB화 |
 | **Phase 2** | 가상 스크리닝 시스템 | **완료** | Vina Batch 도킹 및 3D 뷰어 |
-| **Phase 3** | AI 활성 예측 모델 | **진행 중** | GCN/RF 모델 기반 활성 추론 |
+| **Phase 3** | AI 활성 예측 모델 | **완료** | GCN/RF 모델 기반 활성 추론 |
 | **Phase 4** | LLM RAG 기반 기전 설명 | **미구현** | LangChain/ChromaDB 연동 예정 |
 | **Phase 5** | MM-GBSA 정밀 재채점 | **미구현** | AmberTools 기반 스코어 보정 예정 |
 | **Phase 6** | 최종 결과 보고서 자동화 | **미구현** | PDF 및 분석 리포트 생성 기능 |
 
 ---
 
-## 🛠️ 설치 및 실행 (Installation)
+# 🇺🇸 English
 
-### 1. 환경 설정
-```bash
-# uv 설치 (https://astral.sh/uv)
-curl -LsSf https://astral.sh/uv/install.sh | sh
+## 📖 Background (Research)
+**Discovery Core** is an integrated platform combining pharmaceutical knowledge and AI technology to accelerate the development of treatments for **Myasthenia Gravis (MG)**, a rare neuromuscular autoimmune disease.
 
-# 가상환경 생성 및 패키지 설치
-uv venv .venv
-uv pip install -r requirements.txt
-```
+### 1. Disease Overview
+MG is caused by autoantibodies blocking signal transmission at the Neuromuscular Junction (NMJ). It leads to muscle weakness, and approximately 10-15% of patients show **Refractory MG**, failing to respond to conventional treatments. This project adopts a **Drug Repurposing** strategy to find novel mechanisms among safety-proven FDA-approved drugs.
 
-### 2. 실행
-```bash
-# 전체 파이프라인 실행 (Windows)
-run_pipeline.bat
-
-# 대시보드만 실행
-start_dashboard.bat
-```
-접속 URL: **http://localhost:8501**
+### 2. Key Biological Targets
+- **CHRNA1 (AChR α1)**: Primary target of autoantibodies; searching for compounds that stabilize ion channels and prevent receptor degradation.
+- **MuSK (Muscle-Specific Kinase)**: Essential for NMJ formation; searching for positive allosteric modulators for MuSK-positive MG.
+- **LRP4**: A receptor that interacts with MuSK to complex signals for NMJ maintenance.
 
 ---
 
-# 🇺🇸 English
+## 🚀 Key Features & Architecture (Technical)
+An end-to-end automated pipeline from data collection to AI modeling and visualization.
 
-## 📖 Overview
-**Discovery Core** is an integrated platform designed to accelerate **drug repurposing** for rare neuromuscular diseases, specifically Myasthenia Gravis (MG). By combining pharmaceutical expertise with cutting-edge AI, we explore the potential of existing FDA-approved drugs against novel targets like **CHRNA1**, **MuSK**, and **LRP4**.
+### 🛠️ Tech Stack
+- **Cheminformatics**: RDKit (Preprocessing), Meeko (PDBQT), ChEMBL API.
+- **AI/ML Modeling**: PyTorch, PyG, DeepChem (GCN, EGNN-based prediction).
+- **Simulation**: AutoDock Vina 1.2.5 (Batch Docking), MDAnalysis (`Unimplemented`).
+- **Dashboard**: Streamlit, Tailwind CSS, 3Dmol.js (3D visualization).
+- **Infrastructure**: **uv** (Package Manager), Docker, Google Cloud Run.
 
-## 🚀 Key Features
-- **In Silico Screening**: Batch molecular docking using AutoDock Vina.
-- **AI-Based Prediction**: Activity inference using GCN (Graph Convolutional Networks).
-- **Interactive UI**: High-fidelity 3D visualization using 3Dmol.js and Tailwind CSS.
-- **Workflow Automation**: Full data pipeline from protein structure prediction to analytics.
+### 💻 System Requirements
+| Component | Minimum | Recommended |
+|---|---|---|
+| **GPU** | 8GB VRAM | 24GB VRAM (RTX 4090) |
+| **RAM** | 32 GB | 64 GB+ |
+| **OS** | Windows 10/11 | Ubuntu 22.04 LTS |
 
-## 🗺️ Implementation Roadmap
-- [x] **Phase 1**: Data Pipeline (ChEMBL, UniProt, SQLite)
-- [x] **Phase 2**: Virtual Screening (AutoDock Vina)
-- [x] **Phase 3**: AI Activity Scoring (Baseline GCN implemented)
-- [ ] **Phase 4**: LLM-Powered Biological Insights (RAG System - **Unimplemented**)
+---
+
+## 🧬 Automated Data Pipeline (Execution)
+Automated screening steps (Execute via `run_pipeline.bat` on Windows):
+1. **Init DB**: Create SQLite schema (`mg_discovery.db`).
+2. **Fetch Data**: Collect target and drug data via UniProt and ChEMBL.
+3. **Predict Structure**: Generate 3D models using ESMFold or AlphaFold2.
+4. **Prepare Structures**: Convert ligands and receptors to .pdbqt format.
+5. **Virtual Screening**: High-throughput docking with AutoDock Vina.
+6. **Activity Prediction**: Infer binding activity using GCN models.
+7. **Analytics**: Launch interactive dashboard via Streamlit.
+
+---
+
+## 🗺️ Implementation Roadmap (Status)
+- [x] **Phase 1**: Data Pipeline (Done)
+- [x] **Phase 2**: Virtual Screening (Done)
+- [x] **Phase 3**: AI Activity Prediction (Done - Baseline model implemented)
+- [ ] **Phase 4**: LLM RAG-powered Mechanistic Insights (**Unimplemented**)
 - [ ] **Phase 5**: MM-GBSA Precision Rescoring (**Unimplemented**)
 - [ ] **Phase 6**: Automated Analytical Reporting (**Unimplemented**)
 
@@ -132,18 +139,57 @@ start_dashboard.bat
 
 # 🇯🇵 日本語
 
-## 📖 概要
-**Discovery Core** は、希少神経筋疾患（主に重症筋無力症）に対する **既存薬再開発（ドラッグリパーパシング）** を加速させるための AI 統合プラットフォームです。
+## 📖 プロジェクト背景 (Research)
+**Discovery Core** は、希少神経筋疾患である **重症筋無力症 (Myasthenia Gravis, MG)** の治療薬開発を加速させるため、製薬知識と AI 技術を統合したプラットフォームです。
 
-## 🚀 主な機能
-- **仮想スクリーニング**: AutoDock Vina による大規模ドッキングシミュレーション。
-- **AI 活性予測**: GCN（グラフニューラルネットワーク）を用いた相互作用解析。
-- **インタラクティブ分析**: Streamlit と 3Dmol.js を活用した解析ダ미ボード。
+### 1. 疾患の概要
+重症筋無力症は、神経筋接合部 (NMJ) において自己抗体が信号伝達を遮断することで発生する疾患です。筋力低下を引き起こし、患者の約 10〜15% は既存の治療法に反応しない **難治性 MG (Refractory MG)** を呈します。本プロジェクトは、安全性が証明済みの FDA 承認薬の中から新たな機序を探索する **ドラッグリパーパシング (既存薬再開発)** 戦略を採用しています。
 
-## 🗺️ 実装ステータス
-- [x] **Phase 1~2**: データ収集およびドッキング（実装済み）
-- [x] **Phase 3**: AI 予測モデル（ベースライン実装済み）
-- [ ] **Phase 4~6**: LLM RAG システム、MM-GBSA 精密計算、自動レポート（**未実装**）
+### 2. 主要な生物学的標的
+- **CHRNA1 (AChR α1)**: 自己抗体の主要な標的。受容体の分解を防ぎ、イオンチャネルの開放を安定化させる化合物を探索します。
+- **MuSK (Muscle-Specific Kinase)**: NMJ 形成に不可欠な酵素。MuSK 陽性 MG 患者向けにキナーゼ活性化を誘導する調節因子を探索。
+- **LRP4**: MuSK と相互作用し、NMJ 維持のための信号を複合体化する受容体。
+
+---
+
+## 🚀 主な機能とシステムアーキテクチャ (Technical)
+データ収集から AI モデリング、可視化までを自動化したエンドツーエンドのパイプラインを提供します。
+
+### 🛠️ 技術スタック
+- **ケモインフォマティクス**: RDKit (前処理), Meeko (PDBQT 変換), ChEMBL API (データソース)
+- **AI/ML モデリング**: PyTorch, PyG, DeepChem (GCN, EGNN ベースの活性予測)
+- **シミュレーション**: AutoDock Vina 1.2.5 (バッチドッキング), MDAnalysis (`未実装`)
+- **UI/UX**: Streamlit, Tailwind CSS (UI デザイン), 3Dmol.js (3D 分子レンダリング)
+- **インフラ**: **uv** (パッケージマネージャー), Docker, Google Cloud Run
+
+### 💻 システム要件
+| 項目 | 最小構成 | 推奨構成 |
+|---|---|---|
+| **GPU** | NVIDIA 8GB VRAM | NVIDIA 24GB VRAM (RTX 4090) |
+| **RAM** | 32 GB | 64 GB 以上 |
+| **OS** | Windows 10/11 | Ubuntu 22.04 LTS |
+
+---
+
+## 🧬 データパイプライン (Execution)
+以下のステップでスクリーニングを実施します (`run_pipeline.bat` で自動化):
+1. **DB 初期化**: SQLite DB (`mg_discovery.db`) の構築。
+2. **収集**: UniProt および ChEMBL API を介した標的・化合物データの取得。
+3. **予測**: ESMFold または AlphaFold2 を用いた 3D タンパク質構造予測。
+4. **準備**: リガンドおよび受容体の .pdbqt 形式への変換。
+5. **ドッキング**: AutoDock Vina による大規模並列シミュレーション。
+6. **AI 推論**: GCN モデルによる化合物活性のクラス分類と予測。
+7. **分析**: Streamlit によるインタラクティブなダミボードの実行。
+
+---
+
+## 🗺️ ロードマップと進捗状況 (Status)
+- [x] **Phase 1**: データパイプライン構築 (完了)
+- [x] **Phase 2**: 仮想スクリーニングシステム (完了)
+- [x] **Phase 3**: AI 活性予測モデル (完了 - ベースライン実装済み)
+- [ ] **Phase 4**: LLM RAG による機序説明生成 (**未実装**)
+- [ ] **Phase 5**: MM-GBSA 精密再スコアリング (**未実装**)
+- [ ] **Phase 6**: 自動分析レポート生成機能 (**未実装**)
 
 ---
 
