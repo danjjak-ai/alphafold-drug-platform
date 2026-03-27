@@ -72,6 +72,7 @@ content = content.replace(
 )
 content = content.replace('<tbody class="divide-y divide-slate-700/30">', '<tbody id="candidate-table" class="divide-y divide-slate-700/30">')
 content = content.replace('<h3 class="text-sm font-bold text-slate-100">CHRNA1 : MG-003 Binding</h3>', '<h3 class="text-sm font-bold text-slate-100"><span id="viewer-complex-title">CHRNA1 : MG-003 Binding</span></h3>')
+content = content.replace('<p class="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">Current Complex</p>', '<p id="viewer-source-label" class="text-[10px] text-slate-400 uppercase font-bold tracking-tighter text-blue-400 bg-blue-900/30 px-1 py-0.5 rounded inline-block">Current Complex</p>')
 content = content.replace('<span class="w-2 h-2 rounded-full bg-amber-400"></span> Ligand MG-003', '<span class="w-2 h-2 rounded-full bg-amber-400"></span> <span id="viewer-ligand-label">Ligand MG-003</span>')
 content = content.replace('View All Candidates', '<span id="btn-view-all" style="cursor:pointer">View All Candidates</span>')
 content = content.replace('id="ai-chat-output"', 'id="ai-chat-output-original"') # Avoid conflict if any
@@ -85,20 +86,100 @@ content = content.replace('href="#">Simulations</a>', 'id="nav-simulations" href
 
 # 3) Body Skeleton Pages (Dynamics, Library, Simulations)
 skeleton_pages = """
-<div id="page-dynamics" class="flex-1 hidden flex-col items-center justify-center p-20 text-slate-300">
-    <span class="material-symbols-outlined text-8xl text-primary opacity-20 mb-4">timeline</span>
-    <h2 class="text-2xl font-bold">Molecular Dynamics Analysis</h2>
-    <p class="text-slate-500 mt-2">Computing trajectories and binding free energy surfaces... (Coming Soon)</p>
+<div id="page-dynamics" class="flex-1 hidden flex-col p-6 animate-in fade-in duration-500 overflow-y-auto custom-scrollbar">
+    <div class="flex flex-col gap-6">
+        <div class="flex justify-between items-end">
+            <div><h2 class="text-2xl font-bold text-slate-100">Molecular Dynamics Analysis</h2><p class="text-xs text-slate-500">Atomic-level structural transitions and binding stability</p></div>
+            <div class="flex gap-2"><button class="px-3 py-1.5 rounded-lg bg-primary/20 text-primary text-[10px] font-bold border border-primary/30">RUN NEW SIMULATION</button></div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 glass-panel rounded-2xl h-[450px] relative overflow-hidden group">
+                <div class="absolute top-4 left-4 z-10 bg-slate-900/60 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700/50 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                    <span id="md-viewer-label" class="text-[10px] font-bold text-slate-200 uppercase tracking-wider">Select a simulation...</span>
+                </div>
+                <div id="md-viewer" class="w-full h-full bg-slate-900"></div>
+                <!-- MD RMSD mini chart overlay -->
+                <div class="absolute bottom-16 left-4 right-4 h-[60px] pointer-events-none">
+                    <svg id="md-rmsd-chart" width="100%" height="100%" viewBox="0 0 600 60" preserveAspectRatio="none">
+                        <path id="md-rmsd-path" d="" fill="none" stroke="#259df4" stroke-width="2" opacity="0.8"></path>
+                    </svg>
+                </div>
+                <!-- Playback controls for MD -->
+                <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-slate-900/80 backdrop-blur-xl px-5 py-2.5 rounded-full border border-slate-700 z-20">
+                    <span id="md-btn-rewind" class="material-symbols-outlined text-sm text-slate-400 cursor-pointer hover:text-primary">fast_rewind</span>
+                    <span id="md-btn-play" class="material-symbols-outlined text-2xl text-primary cursor-pointer hover:scale-110 transition-transform">play_arrow</span>
+                    <span id="md-btn-forward" class="material-symbols-outlined text-sm text-slate-400 cursor-pointer hover:text-primary">fast_forward</span>
+                    <div class="h-4 w-[1px] bg-slate-700"></div>
+                    <span id="md-frame-label" class="text-xs font-mono text-slate-400">FRAME: -/-</span>
+                </div>
+            </div>
+            <div class="flex flex-col gap-4">
+                <div class="glass-panel rounded-2xl p-5 flex flex-col gap-4">
+                    <h3 class="text-xs font-bold text-slate-500 uppercase">Analysis Tokens</h3>
+                    <div class="flex flex-col gap-3">
+                        <div class="p-3 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                            <div class="flex justify-between text-[10px] text-slate-400 mb-1"><span>Average RMSD</span><span id="md-avg-rmsd" class="text-primary">-- \u00c5</span></div>
+                            <div class="h-1 w-full bg-slate-700/50 rounded-full overflow-hidden"><div id="md-rmsd-bar" class="h-full bg-primary rounded-full" style="width: 0%"></div></div>
+                        </div>
+                        <div class="p-3 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                            <div class="flex justify-between text-[10px] text-slate-400 mb-1"><span>Duration</span><span id="md-duration" class="text-green-400">-- ns</span></div>
+                            <div class="h-1 w-full bg-slate-700/50 rounded-full overflow-hidden"><div id="md-duration-bar" class="h-full bg-green-500 rounded-full" style="width: 0%"></div></div>
+                        </div>
+                        <div class="p-3 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                            <div class="flex justify-between text-[10px] text-slate-400 mb-1"><span>Frames</span><span id="md-num-frames" class="text-amber-400">--</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-panel rounded-2xl p-5 flex-1 overflow-y-auto custom-scrollbar">
+                    <h3 class="text-xs font-bold text-slate-500 uppercase mb-3">Trajectory History</h3>
+                    <div id="md-history-list" class="flex flex-col gap-2">
+                        <p class="text-[10px] text-slate-600 italic">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-<div id="page-library" class="flex-1 hidden flex-col items-center justify-center p-20 text-slate-300">
-    <span class="material-symbols-outlined text-8xl text-indigo-400 opacity-20 mb-4">folder_special</span>
-    <h2 class="text-2xl font-bold">Compound Library</h2>
-    <p class="text-slate-500 mt-2">Managing 4,410+ results and external lead series... (Coming Soon)</p>
+
+<div id="page-library" class="flex-1 hidden flex-col p-6 animate-in slide-in-from-bottom-4 duration-500 overflow-y-auto custom-scrollbar">
+    <div class="flex flex-col gap-6 w-full max-w-6xl mx-auto">
+        <div class="flex justify-between items-end">
+            <div><h2 class="text-2xl font-bold text-slate-100">Compound Library</h2><p class="text-xs text-slate-500">Managing 4,410+ results and external lead series</p></div>
+            <div class="flex gap-2">
+                <div class="relative"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">search</span><input id="library-search-input" type="text" placeholder="Search ChEMBL ID or Name..." class="bg-slate-800/50 border border-slate-700 rounded-lg pl-9 pr-4 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-primary/50 w-64"></div>
+            </div>
+        </div>
+        <div class="glass-panel rounded-2xl overflow-hidden border border-slate-700/50">
+            <table class="w-full text-left">
+                <thead class="bg-slate-800/50 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    <tr>
+                        <th class="px-4 py-3">ChEMBL ID</th>
+                        <th class="px-4 py-3">Common Name</th>
+                        <th class="px-4 py-3 text-center">MW</th>
+                        <th class="px-4 py-3 text-center">LogP</th>
+                        <th class="px-4 py-3">Status</th>
+                        <th class="px-4 py-3">Vina Score</th>
+                    </tr>
+                </thead>
+                <tbody id="library-table-body" class="divide-y divide-slate-700/30">
+                    <!-- Library Data Injected Here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
-<div id="page-simulations" class="flex-1 hidden flex-col items-center justify-center p-20 text-slate-300">
-    <span class="material-symbols-outlined text-8xl text-amber-400 opacity-20 mb-4">model_training</span>
-    <h2 class="text-2xl font-bold">Simulations & Assays</h2>
-    <p class="text-slate-500 mt-2">Real-time binding kinetic simulations and virtual assays... (Coming Soon)</p>
+
+<div id="page-simulations" class="flex-1 hidden flex-col p-6 animate-in fade-in duration-500 overflow-y-auto custom-scrollbar">
+    <div class="flex flex-col gap-6 w-full max-w-5xl mx-auto">
+        <div class="flex justify-between items-end">
+            <div><h2 class="text-2xl font-bold text-slate-100">Simulations & Assays</h2><p class="text-xs text-slate-500">Active High-Performance Computing Workloads</p></div>
+            <button class="px-4 py-2 rounded-xl bg-primary shadow-lg shadow-primary/20 text-white text-xs font-bold hover:scale-105 transition-transform">RUN VIRTUAL ASSAY</button>
+        </div>
+        <div id="simulations-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Simulations Data Injected Here -->
+        </div>
+    </div>
 </div>
 """
 content = content.replace("</header>", "</header>" + skeleton_pages)
@@ -159,6 +240,11 @@ content = re.sub(
     r'<button class="w-8 h-8 rounded bg-background-dark/80 border border-slate-700 flex items-center justify-center hover:bg-primary transition-colors">\s*<span class="material-symbols-outlined text-lg">zoom_in</span>',
     '<button id="btn-zoom-ligand" title="리간드 줌" class="w-8 h-8 rounded bg-background-dark/80 border border-slate-700 flex items-center justify-center hover:bg-primary transition-colors">\n<span class="material-symbols-outlined text-lg">zoom_in</span>',
     content
+)
+# Add Fullscreen button - we'll just insert it after zoom_in
+content = content.replace(
+    'id="btn-zoom-ligand"',
+    'id="btn-fullscreen" title="전체화면" class="w-8 h-8 rounded bg-background-dark/80 border border-slate-700 flex items-center justify-center hover:bg-primary transition-colors">\n<span class="material-symbols-outlined text-lg">fullscreen</span>\n</button>\n<button id="btn-zoom-ligand"'
 )
 
 # --------------------------------------------------------------------------------
@@ -259,6 +345,12 @@ js_logic = """
     (function() {
         let viewer = null;
         let currentProtein = null;
+        let currentLigandId = null;
+        let numFrames = 0;
+        let playInterval = null;
+        let isPlaying = false;
+        let currentFrame = 0;
+
         const initViewer = () => {
             if (viewer) return;
             const element = document.getElementById('3dmol-viewer');
@@ -280,6 +372,8 @@ js_logic = """
                     const setPct = (id, v) => { const node = el(id); if(node) node.style.width = v + '%'; };
                     
                     if(args.table_html && el('candidate-table')) el('candidate-table').innerHTML = args.table_html;
+                    if(args.library_html && el('library-table-body')) el('library-table-body').innerHTML = args.library_html;
+                    if(args.simulations_html && el('simulations-list')) el('simulations-list').innerHTML = args.simulations_html;
                     if(args.ai_html && el('ai-chat-output')) el('ai-chat-output').innerHTML = args.ai_html;
                     
                     if(args.chrna1_score) setVal('chrna1-score-val', args.chrna1_score);
@@ -287,6 +381,7 @@ js_logic = """
                     if(args.lrp4_score) setVal('lrp4-score-val', args.lrp4_score);
                     if(args.chrna1_progress) setPct('chrna1-progress', args.chrna1_progress);
                     if(args.viewer_complex) setVal('viewer-complex-title', args.viewer_complex);
+                    if(args.viewer_source) setVal('viewer-source-label', args.viewer_source);
                     if(args.viewer_ligand) setVal('viewer-ligand-label', args.viewer_ligand);
                     if(args.mechanism_inference) setVal('mechanism-inference', args.mechanism_inference);
                     if(args.mechanism_coeff) setVal('mechanism-coeff', args.mechanism_coeff);
@@ -308,15 +403,20 @@ js_logic = """
                                     viewer.addModel(args.protein_pdb, "pdb");
                                     viewer.setStyle({model: 0}, { cartoon: { color: 'spectrum', opacity: 0.8 } });
                                     currentProtein = args.protein_pdb;
+                                    currentLigandId = null; // Reset ligand if protein changes
                                 }
-                                if (args.ligand_pdbqt) {
-                                    // Remove existing ligand models (starting from model 1)
-                                    // Or just clear and re-add everything for simplicity if it fails
-                                    const lModel = viewer.addModel(args.ligand_pdbqt, "pdbqt");
-                                    if (lModel) {
-                                        viewer.setStyle({model: lModel.getID()}, { stick: { colorscheme: 'greenCarbon', radius: 0.2 }, sphere: { radius: 0.4 } });
-                                        viewer.zoomTo({model: lModel.getID()});
-                                    }
+                                if (args.ligand_pdbqt && args.chembl_id !== currentLigandId) {
+                                    // Remove existing frames if any
+                                    const allModels = viewer.getModelList();
+                                    for(let i=1; i<allModels.length; i++) { viewer.removeModel(allModels[i]); }
+                                    
+                                    numFrames = args.num_poses || 1;
+                                    viewer.addModelsAsFrames(args.ligand_pdbqt, "pdbqt");
+                                    viewer.setStyle({model: -1}, { stick: { colorscheme: 'greenCarbon', radius: 0.2 }, sphere: { radius: 0.4 } });
+                                    viewer.zoomTo({model: -1});
+                                    currentLigandId = args.chembl_id;
+                                    currentFrame = 0;
+                                    viewer.setFrame(0);
                                 } else {
                                     viewer.zoomTo();
                                 }
@@ -335,6 +435,83 @@ js_logic = """
                         el('viewer-error').classList.remove('hidden');
                         el('viewer-error-msg').innerText = "No structural data (PDB/PDBQT) found for this candidate.";
                     }
+
+                    // ── MD Page Render ─────────────────────────────────────
+                    const mdHistory = args.md_history || [];
+                    const mdHistList = el('md-history-list');
+                    if (mdHistList && mdHistory.length > 0) {
+                        mdHistList.innerHTML = mdHistory.map(h => `
+                            <div class="text-[10px] p-2 rounded border border-transparent hover:bg-slate-700/30 hover:border-slate-700 cursor-pointer transition-all md-hist-item" data-sim-id="${h.sim_id}">
+                                <div class="flex justify-between">
+                                    <span class="text-slate-200 font-bold">${h.sim_id}</span>
+                                    <span class="text-slate-500">${(h.created_at || '').slice(0, 10)}</span>
+                                </div>
+                                <div class="text-slate-400 mt-0.5">${h.target} : ${h.chembl_id}</div>
+                                <div class="text-slate-500 mt-0.5 italic">RMSD: ${(h.mean_rmsd || 0).toFixed(2)}\u00c5 | ${(h.duration_ns || 0).toFixed(1)}ns | ${h.num_frames || 0} frames</div>
+                            </div>
+                        `).join('');
+                        mdHistList.querySelectorAll('.md-hist-item').forEach(item => {
+                            item.onclick = () => Streamlit.setComponentValue({action: 'md_select', sim_id: item.dataset.simId, ts: Date.now()});
+                        });
+                    }
+
+                    const mdM = args.md_metrics || {};
+                    if (mdM.sim_id) {
+                        const lbl = el('md-viewer-label');
+                        if (lbl) lbl.innerText = `Trajectory: ${mdM.target}_${mdM.chembl_id}`;
+
+                        if (el('md-avg-rmsd'))  el('md-avg-rmsd').innerText  = `${(mdM.mean_rmsd || 0).toFixed(2)} \u00c5`;
+                        if (el('md-duration'))  el('md-duration').innerText  = `${(mdM.duration_ns || 0).toFixed(1)} ns`;
+                        if (el('md-num-frames')) el('md-num-frames').innerText = `${mdM.num_frames || 0}`;
+
+                        const rmsdPct = Math.min(((mdM.mean_rmsd || 0) / 5) * 100, 100);
+                        if (el('md-rmsd-bar')) el('md-rmsd-bar').style.width = rmsdPct + '%';
+                        const durPct = Math.min(((mdM.duration_ns || 0) / 100) * 100, 100);
+                        if (el('md-duration-bar')) el('md-duration-bar').style.width = durPct + '%';
+
+                        const rPath = el('md-rmsd-path');
+                        if (rPath && mdM.rmsd_svg_path) rPath.setAttribute('d', mdM.rmsd_svg_path);
+
+                        // MD 3D Viewer
+                        if (mdM.pdbqt_content && !window._mdViewerLoaded) {
+                            try {
+                                const mdViewer = $3Dmol.createViewer('md-viewer', {backgroundColor: '#0f172a'});
+                                const mdFrames = mdM.pdbqt_content;
+                                const nFrames = mdM.num_frames || 1;
+                                mdViewer.addModelsAsFrames(mdFrames, 'pdbqt');
+                                mdViewer.setStyle({model: -1}, {stick: {colorscheme: 'greenCarbon', radius: 0.2}, sphere: {radius: 0.4}});
+                                mdViewer.zoomTo();
+                                mdViewer.render();
+                                window._mdViewerLoaded = true;
+                                window._mdViewer = mdViewer;
+                                window._mdNumFrames = nFrames;
+                                window._mdFrame = 0;
+                                window._mdPlaying = false;
+
+                                const frameLbl = el('md-frame-label');
+                                const setMdFrame = (f) => {
+                                    window._mdFrame = (f + nFrames) % nFrames;
+                                    mdViewer.setFrame(window._mdFrame);
+                                    mdViewer.render();
+                                    if (frameLbl) frameLbl.innerText = `FRAME: ${window._mdFrame + 1}/${nFrames}`;
+                                };
+                                setMdFrame(0);
+
+                                if (el('md-btn-play')) el('md-btn-play').onclick = () => {
+                                    window._mdPlaying = !window._mdPlaying;
+                                    el('md-btn-play').innerText = window._mdPlaying ? 'pause' : 'play_arrow';
+                                    if (window._mdPlaying) {
+                                        window._mdInterval = setInterval(() => setMdFrame(window._mdFrame + 1), 500);
+                                    } else {
+                                        clearInterval(window._mdInterval);
+                                    }
+                                };
+                                if (el('md-btn-rewind'))  el('md-btn-rewind').onclick  = () => setMdFrame(window._mdFrame - 1);
+                                if (el('md-btn-forward')) el('md-btn-forward').onclick = () => setMdFrame(window._mdFrame + 1);
+                            } catch(mdErr) { console.error('MD viewer error:', mdErr); }
+                        }
+                    }
+
                     Streamlit.setFrameHeight(document.body.scrollHeight);
                 } catch(e) { console.error("Render catch:", e); }
             }
@@ -395,6 +572,77 @@ js_logic = """
             }
             if(el('btn-zoom-ligand')) {
                 el('btn-zoom-ligand').onclick = () => { if(viewer) viewer.zoomTo({model: -1}); };
+            }
+
+            // 6. Playback Controls Logic
+            const timeSpan = el('player-time');
+            const playPauseBtn = el('btn-play-pause');
+
+            const updateTimeDisplay = (frame) => {
+                if (timeSpan) timeSpan.innerText = `POSE: ${frame + 1}/${numFrames || 1} (Time: ${(frame * 0.5).toFixed(1)}ns)`;
+            };
+
+            const togglePlay = () => {
+                isPlaying = !isPlaying;
+                if (isPlaying) {
+                    playPauseBtn.innerText = 'pause_circle';
+                    playInterval = setInterval(() => {
+                        if (!viewer) return;
+                        currentFrame = (currentFrame + 1) % (numFrames || 1);
+                        viewer.setFrame(currentFrame);
+                        updateTimeDisplay(currentFrame);
+                        viewer.render();
+                    }, 500);
+                } else {
+                    playPauseBtn.innerText = 'play_circle';
+                    clearInterval(playInterval);
+                }
+            };
+
+            if (playPauseBtn) playPauseBtn.onclick = togglePlay;
+            if (el('btn-skip-prev')) el('btn-skip-prev').onclick = () => { 
+                if(!viewer) return;
+                currentFrame = (currentFrame - 1 + numFrames) % numFrames;
+                viewer.setFrame(currentFrame);
+                updateTimeDisplay(currentFrame);
+                viewer.render();
+            };
+            if (el('btn-skip-next')) el('btn-skip-next').onclick = () => { 
+                if(!viewer) return;
+                currentFrame = (currentFrame + 1) % numFrames;
+                viewer.setFrame(currentFrame);
+                updateTimeDisplay(currentFrame);
+                viewer.render();
+            };
+
+            // 7. Fullscreen Toggle
+            if (el('btn-fullscreen')) {
+                el('btn-fullscreen').onclick = () => {
+                    const container = el('3dmol-viewer').parentElement;
+                    if (!document.fullscreenElement) {
+                        container.requestFullscreen().catch(err => console.error(err));
+                        el('btn-fullscreen').querySelector('span').innerText = 'fullscreen_exit';
+                    } else {
+                        document.exitFullscreen();
+                        el('btn-fullscreen').querySelector('span').innerText = 'fullscreen';
+                    }
+                };
+            }
+
+            // 8. Library Search
+            const libSearch = el('library-search-input');
+            if (libSearch) {
+                let debounceTimer;
+                libSearch.oninput = (e) => {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        Streamlit.setComponentValue({
+                            action: 'library_search',
+                            query: e.target.value,
+                            ts: Date.now()
+                        });
+                    }, 500);
+                };
             }
 
             initViewer();
