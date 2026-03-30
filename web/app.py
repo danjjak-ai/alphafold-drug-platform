@@ -285,6 +285,16 @@ def get_md_metrics(sim_id):
         "pdbqt_content": pdbqt_content
     }
 
+def detect_coordinate_frame(pdbqt_content):
+    """Detect coordinate frame from ligand: if |X| > 50, assume RCSB frame (usually centered around >100)"""
+    for line in pdbqt_content.splitlines():
+        if line.startswith("ATOM") or line.startswith("HETATM"):
+            try:
+                x = float(line[30:38])
+                return "rcsb" if abs(x) > 50 else "alphafold"
+            except: continue
+    return "alphafold"
+
 def get_docking_data(chembl_id):
     import glob
     # Use absolute paths for Cloud Run consistency
@@ -314,45 +324,53 @@ def get_docking_data(chembl_id):
     
     num_poses = pdbqt.count("MODEL")
     
-    # DB 조회하여 메타데이터 가져오기
-    target_source_label = "RCSB PDB"
+    # 리간드 좌표계 감지 (Strategy A)
+    ligand_frame = detect_coordinate_frame(pdbqt)
+    target_source_label = f"Auto-aligned ({ligand_frame.upper()})"
     protein_pdb = ""
-    db_path = os.path.join(base_dir, "data", "mg_discovery.db")
-    if os.path.exists(db_path):
-        import sqlite3
-        conn = sqlite3.connect(db_path)
-        cur = conn.cursor()
-        try:
-            row = cur.execute("SELECT structure_source, predicted_plddt, predicted_pdb_path FROM targets WHERE LOWER(gene_name) = ?", (target_part.lower(),)).fetchone()
-            if row:
-                src, plddt, af_path = row
-                if src == "alphafold_db" and af_path and os.path.exists(os.path.join(base_dir, af_path)):
-                    target_source_label = f"AlphaFold DB (pLDDT: {plddt})"
-                    with open(os.path.join(base_dir, af_path), "r") as f:
-                        protein_pdb = f.read()
-                elif src == "rcsb_pdb":
-                    target_source_label = "RCSB PDB"
-        except:
-            pass
-        finally:
-            conn.close()
 
-    # 폴백
+    # 1. RCSB 좌표계인 경우 RCSB PDB 우선 로드
+    if ligand_frame == "rcsb":
+        protein_filename = "7ql6_raw.pdb" if "chrna1" in target_part else "8s9p_raw.pdb"
+        rcsb_path = os.path.join(base_dir, "data", "structures", "targets", protein_filename)
+        if os.path.exists(rcsb_path):
+            with open(rcsb_path, "r") as f:
+                protein_pdb = f.read()
+            target_source_label = "RCSB PDB (Aligned)"
+
+    # 2. AlphaFold 좌표계이거나 RCSB 로드 실패 시 DB 조회
+    if not protein_pdb:
+        db_path = os.path.join(base_dir, "data", "mg_discovery.db")
+        if os.path.exists(db_path):
+            import sqlite3
+            conn = sqlite3.connect(db_path)
+            cur = conn.cursor()
+            try:
+                row = cur.execute("SELECT structure_source, predicted_plddt, predicted_pdb_path FROM targets WHERE LOWER(gene_name) = ?", (target_part.lower(),)).fetchone()
+                if row:
+                    src, plddt, af_path = row
+                    # 리간드가 AlphaFold 프레임이면 AlphaFold PDB 로드
+                    if ligand_frame == "alphafold" and af_path and os.path.exists(os.path.join(base_dir, af_path)):
+                        target_source_label = f"AlphaFold DB (pLDDT: {plddt})"
+                        with open(os.path.join(base_dir, af_path), "r") as f:
+                            protein_pdb = f.read()
+            except: pass
+            finally: conn.close()
+
+    # 3. 최종 폴백 (가장 유사한 타겟 구조)
     if not protein_pdb:
         protein_filename = "7ql6_raw.pdb" if "chrna1" in target_part else "8s9p_raw.pdb"
-        protein_paths = [
+        fallback_paths = [
             os.path.join(base_dir, "data", "structures", "targets", protein_filename),
             os.path.join(base_dir, "web", "demo_assets", "data", "structures", "targets", protein_filename)
         ]
-        
-        for pp in protein_paths:
+        for pp in fallback_paths:
             if os.path.exists(pp):
-                with open(pp, "r") as f:
-                    protein_pdb = f.read()
+                with open(pp, "r") as f: protein_pdb = f.read()
                 break
                 
     if not protein_pdb:
-        print(f"[app] PROTEIN PDB NOT FOUND for {target_part} in {protein_paths}")
+        print(f"[app] PROTEIN PDB NOT FOUND for {target_part} in {target_part}")
             
     return target_part.upper(), protein_pdb, pdbqt, num_poses, target_source_label
 

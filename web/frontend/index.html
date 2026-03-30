@@ -613,7 +613,7 @@
                                     numFrames = args.num_poses || 1;
                                     viewer.addModelsAsFrames(args.ligand_pdbqt, "pdbqt");
                                     viewer.setStyle({model: -1}, { stick: { colorscheme: 'greenCarbon', radius: 0.2 }, sphere: { radius: 0.4 } });
-                                    viewer.zoomTo({model: -1});
+                                    viewer.zoomTo(); // Global zoom to see both protein and ligand
                                     currentLigandId = args.chembl_id;
                                     currentFrame = 0;
                                     viewer.setFrame(0);
@@ -771,7 +771,7 @@
                 };
             }
             if(el('btn-zoom-ligand')) {
-                el('btn-zoom-ligand').onclick = () => { if(viewer) viewer.zoomTo({model: -1}); };
+                el('btn-zoom-ligand').onclick = () => { if(viewer) viewer.zoomTo({model: -1}, 1000, false); };
             }
 
             // 6. Playback Controls Logic
