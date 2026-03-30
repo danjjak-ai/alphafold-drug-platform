@@ -94,6 +94,22 @@ def init_db(db_path):
     )
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS mmgbsa_results (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        compound_id INTEGER,
+        target_id INTEGER,
+        mmgbsa_dG REAL,
+        vdw_dG REAL,
+        elec_dG REAL,
+        gb_dG REAL,
+        sasa_dG REAL,
+        run_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (compound_id) REFERENCES compounds (id),
+        FOREIGN KEY (target_id) REFERENCES targets (id)
+    )
+    """)
+
     conn.commit()
     conn.close()
     print("Database initialization complete.")
