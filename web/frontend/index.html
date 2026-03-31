@@ -816,18 +816,34 @@
             };
 
             // 7. Fullscreen Toggle
-            if (el('btn-fullscreen')) {
-                el('btn-fullscreen').onclick = () => {
-                    const container = el('3dmol-viewer').parentElement;
-                    if (!document.fullscreenElement) {
+            const toggleFullscreen = () => {
+                const container = el('3dmol-viewer').closest('.glass-panel');
+                if (!document.fullscreenElement) {
+                    if (container.requestFullscreen) {
                         container.requestFullscreen().catch(err => console.error(err));
-                        el('btn-fullscreen').querySelector('span').innerText = 'fullscreen_exit';
-                    } else {
-                        document.exitFullscreen();
-                        el('btn-fullscreen').querySelector('span').innerText = 'fullscreen';
                     }
-                };
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
+            };
+
+            if (el('btn-fullscreen')) {
+                el('btn-fullscreen').onclick = toggleFullscreen;
             }
+
+            document.addEventListener('fullscreenchange', () => {
+                const btn = el('btn-fullscreen');
+                if (!btn) return;
+                if (document.fullscreenElement) {
+                    btn.querySelector('span').innerText = 'fullscreen_exit';
+                    btn.title = '전체화면 종료';
+                } else {
+                    btn.querySelector('span').innerText = 'fullscreen';
+                    btn.title = '전체화면';
+                }
+            });
 
             // 8. Library Search
             const libSearch = el('library-search-input');

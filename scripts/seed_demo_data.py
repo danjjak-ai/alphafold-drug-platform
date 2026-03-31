@@ -84,8 +84,7 @@ def seed(db_path: str):
     """)
     conn.commit()
 
-    # Seeding targets
-    cur.execute("DELETE FROM targets")
+    # 1. Seeding targets (Keep existing, add missing)
     for uniprot, gene, pdb, path in DEMO_TARGETS:
         cur.execute(
             "INSERT OR IGNORE INTO targets (uniprot_id, gene_name, pdb_id, structure_path) VALUES (?,?,?,?)",
@@ -94,62 +93,83 @@ def seed(db_path: str):
     conn.commit()
     target_ids = {row[1]: row[0] for row in cur.execute("SELECT id, gene_name FROM targets")}
 
-    # Seeding compounds
-    cur.execute("DELETE FROM compounds")
-    compound_ids = {}
+    # 2. Seeding demo compounds
     for chembl_id, name, smiles, mw, logp, tpsa, hbd, hba, max_phase in DEMO_COMPOUNDS:
         cur.execute(
             "INSERT OR IGNORE INTO compounds (chembl_id, name, smiles, mw, logp, tpsa, hbd, hba, max_phase) VALUES (?,?,?,?,?,?,?,?,?)",
             (chembl_id, name, smiles, mw, logp, tpsa, hbd, hba, max_phase)
         )
-        cur.execute("SELECT id FROM compounds WHERE chembl_id=?", (chembl_id,))
-        compound_ids[chembl_id] = cur.fetchone()[0]
+    conn.commit()
+    
+    # 3. Scan results/docking/ for real files and register them
+    results_dir = os.path.join("results", "docking")
+    if os.path.exists(results_dir):
+        files = [f for f in os.listdir(results_dir) if f.endswith("_out.pdbqt")]
+        print(f"[seed] Found {len(files)} pdbqt files. Registering...")
+        for f in files:
+            # Format: gene_chemblid_out.pdbqt
+            parts = f.replace("_out.pdbqt", "").split("_")
+            if len(parts) < 2: continue
+            gene_name = parts[0].upper()
+            chembl_id = parts[1]
+            
+            # Ensure compound exists
+            cur.execute("INSERT OR IGNORE INTO compounds (chembl_id, name) VALUES (?,?)", (chembl_id, chembl_id))
+            cur.execute("SELECT id FROM compounds WHERE chembl_id=?", (chembl_id,))
+            cid = cur.fetchone()[0]
+            
+            # Ensure target exists
+            tid = target_ids.get(gene_name)
+            if not tid:
+                cur.execute("INSERT OR IGNORE INTO targets (uniprot_id, gene_name) VALUES (?,?)", (f"UP_{gene_name}", gene_name))
+                cur.execute("SELECT id FROM targets WHERE gene_name=?", (gene_name,))
+                tid = cur.fetchone()[0]
+                target_ids[gene_name] = tid
+                
+            pose_path = os.path.join("results", "docking", f)
+            
+            # Extract score from file REMARK
+            vina_score = -7.0 # default
+            try:
+                with open(pose_path, 'r') as pf:
+                    for line in pf:
+                        if "VINA RESULT" in line or "REMARK VINA RESULT" in line:
+                            vina_score = float(line.split()[-4]) # Vina output format
+                            break
+            except:
+                pass
+                
+            cur.execute(
+                "INSERT OR IGNORE INTO docking_results (compound_id, target_id, vina_score, pose_path) VALUES (?,?,?,?)",
+                (cid, tid, vina_score, pose_path)
+            )
+    
     conn.commit()
 
-    # Seeding docking results & creating mock 3D files
-    results_dir = os.path.join("results", "docking")
-    os.makedirs(results_dir, exist_ok=True)
-    
+    # 4. Generate mock data ONLY if missing
     rng = random.Random(42)
-    targets_list = ["CHRNA1", "MUSK", "LRP4"]
-    cur.execute("DELETE FROM docking_results")
     for chembl_id, vina_tuple in DEMO_VINA_SCORES.items():
-        cid = compound_ids.get(chembl_id)
-        if not cid: continue
-        for i, gene in enumerate(targets_list):
+        cur.execute("SELECT id FROM compounds WHERE chembl_id=?", (chembl_id,))
+        cid = cur.fetchone()[0]
+        for i, gene in enumerate(["CHRNA1", "MUSK", "LRP4"]):
             tid = target_ids.get(gene)
-            if not tid: continue
-            
-            vina = float(vina_tuple[i]) + rng.uniform(-0.3, 0.3)
-            # Use fixed naming convention for app.py to find it
             pose_path = os.path.join("results", "docking", f"{gene.lower()}_{chembl_id}_out.pdbqt")
             
-            cur.execute(
-                "INSERT INTO docking_results (compound_id, target_id, vina_score, rmsd_lb, rmsd_ub, pose_path) VALUES (?,?,?,?,?,?)",
-                (cid, tid, float(round(vina, 2)), 0.5, 2.0, pose_path)
-            )
-            
-            # Create a mock pdbqt content
-            with open(pose_path, "w") as f:
-                f.write(f"REMARK  VINA RESULT: {vina:.1f} kcal/mol\n")
-                f.write("ATOM      1  N   ASP A   1      25.109  14.654  32.887  1.00  0.00           N\n")
-                f.write("END\n")
-
-    # Ensure target PDBs are available
-    target_pdb_dir = os.path.join("data", "structures", "targets")
-    os.makedirs(target_pdb_dir, exist_ok=True)
-    for _, gene, _, _ in DEMO_TARGETS:
-        filename = "7ql6_raw.pdb" if gene == "CHRNA1" else "8s9p_raw.pdb"
-        dest_path = os.path.join(target_pdb_dir, filename)
-        if not os.path.exists(dest_path):
-            with open(dest_path, "w") as f:
-                f.write(f"REMARK MOCK PDB FOR {gene}\n")
-                f.write("ATOM      1  CA  GLY A   1       0.000   0.000   0.000  1.00  0.00           C\n")
-                f.write("END\n")
+            if not os.path.exists(pose_path):
+                vina = float(vina_tuple[i]) + rng.uniform(-0.3, 0.3)
+                with open(pose_path, "w") as f:
+                    f.write(f"REMARK  VINA RESULT: {vina:.1f} kcal/mol\n")
+                    f.write("ATOM      1  N   ASP A   1      25.109  14.654  32.887  1.00  0.00           N\n")
+                    f.write("END\n")
+                
+                cur.execute(
+                    "INSERT OR IGNORE INTO docking_results (compound_id, target_id, vina_score, pose_path) VALUES (?,?,?,?)",
+                    (cid, tid, vina, pose_path)
+                )
 
     conn.commit()
     conn.close()
-    print(f"[seed_demo_data] Seeding complete. 3D files generated in {results_dir}")
+    print(f"[seed_demo_data] Seeding complete.")
 
 if __name__ == "__main__":
     seed(os.path.join("data", "mg_discovery.db"))

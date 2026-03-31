@@ -21,19 +21,30 @@ __pycache__/
 # vina_bin/
 
 # 구체적인 대용량 파일만 제외
-models/*.pkl
-models/*.pt
-models/*.pth
-data/processed/
-results/docking/*
+results/docking/
+!results/docking/
+!results/docking/musk_CHEMBL6356_out.pdbqt
+!results/docking/lrp4_CHEMBL6293_out.pdbqt
+!results/docking/musk_CHEMBL21333_out.pdbqt
+!results/docking/lrp4_CHEMBL6356_out.pdbqt
+!results/docking/lrp4_CHEMBL429017_out.pdbqt
+!results/docking/musk_CHEMBL6293_out.pdbqt
+!results/docking/musk_CHEMBL6315_out.pdbqt
+!results/docking/lrp4_CHEMBL6354_out.pdbqt
+!results/docking/lrp4_CHEMBL6361_out.pdbqt
+!results/docking/lrp4_CHEMBL267864_out.pdbqt
+!results/docking/musk_CHEMBL6354_out.pdbqt
+!results/docking/lrp4_CHEMBL6343_out.pdbqt
+!results/docking/lrp4_CHEMBL269729_out.pdbqt
 !results/docking/chrna1_CHEMBL21333_out.pdbqt
-!results/docking/chrna1_CHEMBL1200640_out.pdbqt
-!results/docking/chrna1_CHEMBL941_out.pdbqt
-!results/docking/chrna1_CHEMBL2105762_out.pdbqt
-!results/docking/chrna1_CHEMBL1201131_out.pdbqt
+!results/docking/musk_CHEMBL429017_out.pdbqt
+!results/docking/lrp4_CHEMBL6323_out.pdbqt
+!results/docking/lrp4_CHEMBL6365_out.pdbqt
+!results/docking/chrna1_CHEMBL6356_out.pdbqt
+!results/docking/musk_CHEMBL25_out.pdbqt
+!results/docking/lrp4_CHEMBL6315_out.pdbqt
 !results/docking/.gitkeep
-!data/structures/targets/7ql6_raw.pdb
-!data/structures/targets/8s9p_raw.pdb
+!data/structures/targets/*.pdb
 
 # 로컬 설정
 .env
