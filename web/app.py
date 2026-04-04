@@ -158,7 +158,8 @@ def ensure_md_table():
             max_rmsd    REAL,
             duration_ns REAL,
             num_frames  INTEGER,
-            status      TEXT DEFAULT 'Completed',
+            status      TEXT DEFAULT 'Running',
+            forcefield  TEXT DEFAULT 'AMBER',
             pdbqt_path  TEXT,
             created_at  TEXT DEFAULT (datetime('now','localtime'))
         )
@@ -198,8 +199,8 @@ def ensure_md_table():
             pdbqt_path = None
         cur.execute("""
             INSERT OR IGNORE INTO molecular_dynamics
-                (sim_id, target, chembl_id, mean_rmsd, max_rmsd, duration_ns, num_frames, pdbqt_path)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                (sim_id, target, chembl_id, mean_rmsd, max_rmsd, duration_ns, num_frames, status, forcefield, pdbqt_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'Completed', 'AMBER', ?)
         """, (f"MD-{i:03d}", gene_name or "CHRNA1", chembl_id,
                mean_rmsd, max_rmsd, duration, frames, pdbqt_path))
     conn.commit()
@@ -284,6 +285,88 @@ def get_md_metrics(sim_id):
         "rmsd_svg_path": svg_d,
         "pdbqt_content": pdbqt_content
     }
+
+def call_ollama(prompt: str, context: str = "") -> str:
+    """Ollama 로컬 API를 호출하여 답변 생성"""
+    import requests
+    
+    url = "http://localhost:11434/api/generate"
+    
+    system_prompt = "You are an expert AI research assistant named 'Discovery Core AI'. You specialize in drug discovery, molecular dynamics, and specifically Myasthenia Gravis (MG) repurposing. Provide concise, scientific, and professional answers."
+    if context:
+        system_prompt += f"\n\nContext information regarding current candidate:\n{context}"
+        
+    payload = {
+        "model": "llama3.2",
+        "prompt": prompt,
+        "system": system_prompt,
+        "stream": False
+    }
+    
+    try:
+        response = requests.post(url, json=payload, timeout=30)
+        if response.status_code == 200:
+            return response.json().get("response", "Error parsing response.")
+        else:
+            return f"Error: Ollama API returned status {response.status_code}."
+    except requests.exceptions.RequestException as e:
+        return f"Error: Could not connect to local Ollama server at {url}. Make sure Ollama is running and the 'llama3.2' model is pulled."
+
+def run_md_simulation(target: str, chembl_id: str, duration_ns: float, forcefield: str) -> dict:
+    """새 MD 시뮬레이션을 SQLite에 등록하고 백그라운드 스레드에서 실행한다."""
+    import threading
+    from datetime import datetime
+
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    db_path = os.path.join(base_dir, "data", "mg_discovery.db")
+    if not os.path.exists(db_path):
+        return {"success": False, "error": "DB not found"}
+
+    ensure_md_table()
+    # 타임스탬프 기반 고유 Sim ID 생성
+    sim_id = f"MD-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    num_frames = max(1, int(duration_ns / 0.5))
+
+    # 1. SQLite에 Running 상태로 레코드 INSERT
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.execute("""
+            INSERT OR IGNORE INTO molecular_dynamics
+                (sim_id, target, chembl_id, mean_rmsd, max_rmsd, duration_ns,
+                 num_frames, status, forcefield)
+            VALUES (?, ?, ?, 0.0, 0.0, ?, ?, 'Running', ?)
+        """, (sim_id, target, chembl_id, duration_ns, num_frames, forcefield))
+        conn.commit()
+    except Exception as e:
+        conn.close()
+        return {"success": False, "error": str(e)}
+    conn.close()
+
+    # 2. 백그라운드 스레드: 시뮬레이션 실행 (실제 환경에서는 GROMACS/OpenMM subprocess)
+    def _bg_simulate():
+        import random, time
+        rng = random.Random(hash(sim_id))
+        # 시뮬레이션 소요 시간 (데모: 3초, 실제: gmx mdrun 수 시간)
+        time.sleep(3)
+        mean_rmsd = round(rng.uniform(0.8, 2.5), 2)
+        max_rmsd  = round(mean_rmsd + rng.uniform(0.3, 1.2), 2)
+        c = sqlite3.connect(db_path)
+        try:
+            c.execute("""
+                UPDATE molecular_dynamics
+                SET mean_rmsd=?, max_rmsd=?, status='Completed'
+                WHERE sim_id=?
+            """, (mean_rmsd, max_rmsd, sim_id))
+            c.commit()
+            print(f"[MD] Simulation {sim_id} completed. RMSD={mean_rmsd:.2f}Å")
+        except Exception as e:
+            print(f"[MD] Background update failed: {e}")
+        finally:
+            c.close()
+
+    threading.Thread(target=_bg_simulate, daemon=True).start()
+    return {"success": True, "sim_id": sim_id}
+
 
 def detect_coordinate_frame(pdbqt_content):
     """Detect coordinate frame from ligand: if |X| > 50, assume RCSB frame (usually centered around >100)"""
@@ -648,14 +731,45 @@ def main():
             elif action == "ai_query":
                 query = comp_value.get("query", "")
                 st.session_state.chat_history.append({"role": "user", "text": query})
-                # ... (rest of AI logic remains same)
-                st.session_state.chat_history.append({"role": "assistant", "text": "Analyzing query related to " + query})
+                
+                # Fetch context for the currently selected candidate if any
+                context = ""
+                if st.session_state.selected_id:
+                    cand_id = st.session_state.selected_id
+                    try:
+                        import sqlite3, os
+                        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                        db_path = os.path.join(base_dir, "data", "mg_discovery.db")
+                        conn = sqlite3.connect(db_path)
+                        cand_df = pd.read_sql_query(f"SELECT * FROM compounds WHERE chembl_id = '{cand_id}'", conn)
+                        conn.close()
+                        if not cand_df.empty:
+                            context = cand_df.iloc[0].to_string()
+                    except Exception as e:
+                        print(f"Error fetching candidate context: {e}")
+
+                response = call_ollama(query, context)
+                st.session_state.chat_history.append({"role": "assistant", "text": response})
                 st.rerun()
             elif action == "library_search":
                 st.session_state.library_query = comp_value.get("query")
                 st.rerun()
             elif action == "md_select":
                 st.session_state.selected_md_sim = comp_value.get("sim_id")
+                st.rerun()
+            elif action == "run_md_simulation":
+                target     = comp_value.get("target", "CHRNA1")
+                chembl_id  = comp_value.get("chembl_id", "")
+                duration   = float(comp_value.get("duration_ns", 10.0))
+                forcefield = comp_value.get("forcefield", "AMBER")
+                if chembl_id:
+                    result = run_md_simulation(target, chembl_id, duration, forcefield)
+                    if result.get("success"):
+                        # 새 시뮬레이션을 자동 선택 상태로 설정
+                        st.session_state.selected_md_sim = result["sim_id"]
+                        print(f"[app] New simulation queued: {result['sim_id']}")
+                    else:
+                        print(f"[app] Simulation failed: {result.get('error')}")
                 st.rerun()
 
 if __name__ == "__main__":

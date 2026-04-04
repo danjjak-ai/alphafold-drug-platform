@@ -1,130 +1,91 @@
-import sqlite3
 import os
+import sqlite3
 import pandas as pd
-import matplotlib.pyplot as plt
-from fpdf import FPDF
 from datetime import datetime
 
-class MGReport(FPDF):
-    def header(self):
-        self.set_font('Arial', 'B', 15)
-        self.cell(0, 10, 'MG-Repurposing AI Simulator: Discovery Report', 0, 1, 'C')
-        self.ln(10)
+def generate_report(db_path, output_dir):
+    """
+    Generate an executive summary report from the discovery database.
+    Outputs a Markdown file which can be converted to PDF.
+    """
+    if not os.path.exists(db_path):
+        print(f"Error: Database not found at {db_path}")
+        return
 
-    def footer(self):
-        self.set_y(-15)
-        self.set_font('Arial', 'I', 8)
-        self.cell(0, 10, f'Page {self.page_no()}', 0, 0, 'C')
+    os.makedirs(output_dir, exist_ok=True)
+    report_path = os.path.join(output_dir, "results_report.md")
 
-def generate_report(db_path, output_pdf_path):
     conn = sqlite3.connect(db_path)
     
-    # 1. 상위 후보 데이터 조회 (Vina + MM-GBSA)
+    # query top candidates
     query = """
     SELECT 
         c.chembl_id, 
-        c.name as compound_name, 
+        c.name as compound_name,
         t.gene_name as target,
-        d.vina_score,
-        m.mmgbsa_dG
+        MIN(d.vina_score) as highest_affinity,
+        c.max_phase,
+        m.mmgbsa_score
     FROM docking_results d
     JOIN compounds c ON d.compound_id = c.id
     JOIN targets t ON d.target_id = t.id
-    LEFT JOIN mmgbsa_results m ON (m.compound_id = c.id AND m.target_id = t.id)
-    ORDER BY d.vina_score ASC
-    LIMIT 20
+    LEFT JOIN mmgbsa_results m ON c.id = m.compound_id AND t.id = m.target_id
+    GROUP BY c.chembl_id, t.gene_name
+    ORDER BY highest_affinity ASC
+    LIMIT 10
     """
-    df = pd.read_sql_query(query, conn)
+    try:
+        top_df = pd.read_sql_query(query, conn)
+    except Exception as e:
+        top_df = pd.DataFrame()
+        print(f"Error querying top candidates: {e}")
+        
     conn.close()
 
-    if df.empty:
-        print("No data found to generate report.")
-        return
+    date_str = datetime.now().strftime("%Y-%m-%d")
 
-    # 2. 시각화 차트 생성
-    plt.figure(figsize=(10, 6))
-    plt.style.use('ggplot')
-    
-    # Vina vs MM-GBSA correlation plot
-    valid_df = df.dropna(subset=['mmgbsa_dG'])
-    if not valid_df.empty:
-        plt.scatter(valid_df['vina_score'], valid_df['mmgbsa_dG'], color='teal', alpha=0.6)
-        for i, txt in enumerate(valid_df['chembl_id']):
-            plt.annotate(txt, (valid_df['vina_score'].iloc[i], valid_df['mmgbsa_dG'].iloc[i]), fontsize=8)
-        plt.xlabel('Vina Score (kcal/mol)')
-        plt.ylabel('MM-GBSA dG (kcal/mol)')
-        plt.title('Binding Affinity Correlation')
-        chart_path = "results/reports/affinity_chart.png"
-        plt.savefig(chart_path)
-        plt.close()
+    md_content = f"""# Executive Summary: Myasthenia Gravis (MG) Drug Repurposing
+**Generated Date:** {date_str}
+
+## 1. Project Overview
+This report summarizes the findings from the MG Discovery Core platform. The goal is to identify promising FDA-approved (or late clinical phase) drugs that can be repurposed for the treatment of Myasthenia Gravis, targeting key neuromuscular junction proteins (CHRNA1, MuSK, LRP4).
+
+## 2. Methodology
+* **Target Structures:** Pre-processed structural models generated via AlphaFold.
+* **Virtual Screening:** Molecular docking performed using AutoDock Vina.
+* **Refinement:** High-scoring candidates underwent MM-GBSA rescoring (AmberTools).
+* **AI Evaluation:** Activity probabilities assessed using DeepPurpose/Chemprop models.
+
+## 3. Top 10 Candidate Drugs
+
+| Rank | ChEMBL ID | Name | Target | Vina Score (kcal/mol) | MM-GBSA (kcal/mol) | Max Phase |
+|---:|:---|:---|:---|---:|---:|---:|
+"""
+    if not top_df.empty:
+        for i, row in top_df.iterrows():
+            mmgbsa_str = f"{row['mmgbsa_score']:.2f}" if pd.notna(row.get('mmgbsa_score')) else "N/A"
+            md_content += f"| {i+1} | {row['chembl_id']} | {row['compound_name'] or 'Unknown'} | {row['target']} | {row['highest_affinity']:.2f} | {mmgbsa_str} | {row['max_phase']} |\n"
     else:
-        chart_path = None
+        md_content += "| - | No data available | - | - | - | - | - |\n"
 
-    # 3. PDF 생성
-    pdf = MGReport()
-    
-    # 한글 폰트 추가 시도 (Windows 전용)
-    font_path = "C:/Windows/Fonts/malgun.ttf"
-    if os.path.exists(font_path):
-        pdf.add_font("Malgun", "", font_path)
-        kor_font = "Malgun"
-    else:
-        kor_font = "Arial"
+    md_content += """
+## 4. Limitations
+* In silico predictions require empirical validation.
+* AI models depend on historical training data distribution.
 
-    pdf.add_page()
-    
-    # 개요 섹션
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 10, "1. Executive Summary", 0, 1)
-    pdf.set_font("Arial", '', 10)
-    summary_text = (
-        f"This report presents the in-silico screening results for Myasthenia Gravis (MG) drug repurposing. "
-        f"A total of {len(df)} top candidates were evaluated across biological targets (CHRNA1, MuSK, LRP4). "
-        f"Advanced rescoring using MM-GBSA was applied to prioritize the most promising hits."
-    )
-    pdf.multi_cell(0, 8, summary_text)
-    pdf.ln(5)
+## 5. Next Steps Proposed
+* **In Vitro Validation:** Select the top 3 candidates for binding affinity assays (e.g., SPR).
+* **Cellular Assays:** Test efficacy on AChR clustering in myotube models.
+"""
 
-    # 차트 섹션
-    if chart_path:
-        pdf.set_font("Arial", 'B', 12)
-        pdf.cell(0, 10, "2. Binding Affinity Analysis", 0, 1)
-        pdf.image(chart_path, x=15, w=180)
-        pdf.ln(10)
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write(md_content)
 
-    # 데이터 테이블 섹션
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 10, "3. Candidate Rankings", 0, 1)
-    
-    # Table Header
-    pdf.set_font("Arial", 'B', 9)
-    pdf.set_fill_color(240, 240, 240)
-    pdf.cell(30, 8, "ChEMBL ID", 1, 0, 'C', 1)
-    pdf.cell(50, 8, "Compound Name", 1, 0, 'C', 1)
-    pdf.cell(30, 8, "Target", 1, 0, 'C', 1)
-    pdf.cell(35, 8, "Vina Score", 1, 0, 'C', 1)
-    pdf.cell(35, 8, "MM-GBSA dG", 1, 1, 'C', 1)
-
-    # Table Body
-    pdf.set_font("Arial", '', 8)
-    for _, row in df.iterrows():
-        pdf.cell(30, 7, str(row['chembl_id']), 1)
-        # Handle Potential Unicode in names
-        name = str(row['compound_name']) if row['compound_name'] else "N/A"
-        pdf.cell(50, 7, name[:25], 1) 
-        pdf.cell(30, 7, str(row['target']), 1)
-        pdf.cell(35, 7, f"{row['vina_score']:.2f}", 1, 0, 'C')
-        mmgbsa_val = f"{row['mmgbsa_dG']:.2f}" if pd.notnull(row['mmgbsa_dG']) else "N/A"
-        pdf.cell(35, 7, mmgbsa_val, 1, 1, 'C')
-
-    # Save PDF
-    pdf.output(output_pdf_path)
-    print(f"Report generated successfully: {output_pdf_path}")
+    print(f"Report successfully generated at: {report_path}")
+    print("For PDF output, use tools like pandoc or markdown-pdf.")
 
 if __name__ == "__main__":
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     db_path = os.path.join(base_dir, "data", "mg_discovery.db")
-    os.makedirs(os.path.join(base_dir, "results", "reports"), exist_ok=True)
-    report_path = os.path.join(base_dir, "results", "reports", "MG_Discovery_Report.pdf")
-    
-    generate_report(db_path, report_path)
+    results_dir = os.path.join(base_dir, "results")
+    generate_report(db_path, results_dir)

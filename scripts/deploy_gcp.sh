@@ -1,5 +1,5 @@
 #!/bin/bash
-PROJECT_ID="alphafold-drug-platform"
+PROJECT_ID="alphafold-dashboard"
 REGION="asia-northeast1"
 REQ_SERVICE="alphafold-dashboard"
 REPOSITORY="raretarget"

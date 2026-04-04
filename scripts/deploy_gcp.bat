@@ -1,5 +1,5 @@
 @echo off
-set PROJECT_ID=alphafold-drug-platform
+set PROJECT_ID=alphafold-dashboard
 set REGION=asia-northeast1
 set REQ_SERVICE=alphafold-dashboard
 set REPOSITORY=raretarget

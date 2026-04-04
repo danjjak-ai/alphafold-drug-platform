@@ -78,7 +78,13 @@
     <div class="flex flex-col gap-6">
         <div class="flex justify-between items-end">
             <div><h2 class="text-2xl font-bold text-slate-100">Molecular Dynamics Analysis</h2><p class="text-xs text-slate-500">Atomic-level structural transitions and binding stability</p></div>
-            <div class="flex gap-2"><button class="px-3 py-1.5 rounded-lg bg-primary/20 text-primary text-[10px] font-bold border border-primary/30">RUN NEW SIMULATION</button></div>
+            <div class="flex gap-2">
+              <button id="btn-run-new-sim"
+                class="px-3 py-1.5 rounded-lg bg-primary shadow-lg shadow-primary/20 text-white text-[10px] font-bold hover:scale-105 transition-transform flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">rocket_launch</span>
+                RUN NEW SIMULATION
+              </button>
+            </div>
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 glass-panel rounded-2xl h-[450px] relative overflow-hidden group">
@@ -446,8 +452,8 @@
 </div>
 <div class="p-4 bg-background-dark/30">
 <div class="relative">
-<input class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-xs focus:ring-1 focus:ring-primary focus:border-primary outline-none" placeholder="Ask about mechanism, toxicity, or literature..." type="text"/>
-<button class="absolute right-2 top-1/2 -translate-y-1/2 text-primary">
+<input id="ai-chat-input" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-xs focus:ring-1 focus:ring-primary focus:border-primary outline-none" placeholder="Ask about mechanism, toxicity, or literature..." type="text"/>
+<button id="ai-chat-submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-primary">
 <span class="material-symbols-outlined">send</span>
 </button>
 </div>
@@ -861,10 +867,270 @@
                 };
             }
 
+            // 8.5 AI Chat Feature
+            const aiInput = el('ai-chat-input');
+            const aiSubmit = el('ai-chat-submit');
+            
+            const submitAiQuery = () => {
+                const query = aiInput.value.trim();
+                if (query) {
+                    Streamlit.setComponentValue({
+                        action: 'ai_query',
+                        query: query,
+                        ts: Date.now()
+                    });
+                    aiInput.value = ''; // clear input
+                    
+                    // Add temporary loading indicator text
+                    const chatOutput = el('ai-chat-output');
+                    if(chatOutput) {
+                         const loadingHtml = '<div class="flex gap-2 items-center text-slate-400 p-2"><div class="w-2 h-2 bg-primary rounded-full animate-bounce"></div><div class="w-2 h-2 bg-primary rounded-full animate-bounce" style="animation-delay: 0.1s"></div><div class="w-2 h-2 bg-primary rounded-full animate-bounce" style="animation-delay: 0.2s"></div></div>';
+                         chatOutput.insertAdjacentHTML('beforeend', loadingHtml);
+                         chatOutput.scrollTop = chatOutput.scrollHeight;
+                    }
+                }
+            };
+
+            if (aiInput) {
+                aiInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') submitAiQuery();
+                });
+            }
+            if (aiSubmit) {
+                aiSubmit.addEventListener('click', submitAiQuery);
+            }
+
             initViewer();
             Streamlit.setComponentReady();
             Streamlit.setFrameHeight(document.body.scrollHeight);
+
+            // 9. RUN NEW SIMULATION Modal
+            (function() {
+                const modal    = document.getElementById('modal-new-sim');
+                const overlay  = document.getElementById('modal-overlay');
+                const closeBtn = document.getElementById('modal-close-btn');
+                const cancelBtn= document.getElementById('sim-cancel-btn');
+                const submitBtn= document.getElementById('sim-submit-btn');
+                const errArea  = document.getElementById('sim-error-area');
+                const errMsg   = errArea ? errArea.querySelector('span') : null;
+                const progArea = document.getElementById('sim-progress-area');
+                let selectedTarget = 'CHRNA1';
+
+                if (!modal) return;
+
+                const openModal = () => {
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                    document.getElementById('sim-chembl-input').value = '';
+                    document.getElementById('sim-duration-input').value = '10';
+                    if (progArea) progArea.classList.add('hidden');
+                    if (errArea)  errArea.classList.add('hidden');
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.classList.remove('opacity-50'); }
+                };
+
+                const closeModal = () => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    if (progArea) progArea.classList.add('hidden');
+                    if (errArea)  errArea.classList.add('hidden');
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.classList.remove('opacity-50'); }
+                };
+
+                // 모달 열기
+                const runBtn = document.getElementById('btn-run-new-sim');
+                if (runBtn) runBtn.onclick = openModal;
+
+                // 모달 닫기 (X, 오버레이, Cancel)
+                if (closeBtn) closeBtn.onclick = closeModal;
+                if (overlay)  overlay.onclick  = closeModal;
+                if (cancelBtn) cancelBtn.onclick = closeModal;
+
+                // ESC 키로 모달 닫기
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+                });
+
+                // Target 버튼 그룹
+                document.querySelectorAll('.sim-target-btn').forEach(btn => {
+                    btn.onclick = () => {
+                        selectedTarget = btn.dataset.target;
+                        document.querySelectorAll('.sim-target-btn').forEach(b => {
+                            b.className = b.className
+                                .replace('bg-primary/20', '')
+                                .replace('border-primary', 'border-slate-700')
+                                .replace('text-primary', 'text-slate-400')
+                                .replace('font-bold', '');
+                            b.classList.add('text-slate-400', 'border-slate-700');
+                        });
+                        btn.classList.remove('border-slate-700', 'text-slate-400');
+                        btn.classList.add('bg-primary/20', 'border-primary', 'text-primary', 'font-bold');
+                    };
+                });
+
+                // ChEMBL ID datalist 자동완성 (library-table-body 에서 수집)
+                const fillDatalist = () => {
+                    const dl = document.getElementById('sim-chembl-datalist');
+                    if (!dl) return;
+                    const ids = new Set();
+                    document.querySelectorAll('#candidate-table tr[data-id]').forEach(tr => ids.add(tr.dataset.id));
+                    document.querySelectorAll('#library-table-body td:first-child').forEach(td => ids.add(td.innerText.trim()));
+                    dl.innerHTML = [...ids].filter(v => v.startsWith('CHEMBL')).map(v => `<option value="${v}">`).join('');
+                };
+                fillDatalist();
+
+                // Launch Simulation 제출
+                if (submitBtn) {
+                    submitBtn.onclick = () => {
+                        const chemblId   = (document.getElementById('sim-chembl-input')?.value || '').trim();
+                        const duration   = parseFloat(document.getElementById('sim-duration-input')?.value) || 10;
+                        const forcefield = document.getElementById('sim-ff-select')?.value || 'AMBER';
+
+                        // 유효성 검사
+                        if (!chemblId) {
+                            if (errArea) errArea.classList.remove('hidden');
+                            if (errMsg)  errMsg.innerText = 'ChEMBL ID를 입력해주세요.';
+                            return;
+                        }
+                        if (errArea) errArea.classList.add('hidden');
+
+                        // UI: 로딩 상태
+                        if (progArea) { progArea.classList.remove('hidden'); progArea.classList.add('flex'); }
+                        submitBtn.disabled = true;
+                        submitBtn.classList.add('opacity-50');
+
+                        // Streamlit에 액션 전송
+                        Streamlit.setComponentValue({
+                            action:      'run_md_simulation',
+                            target:      selectedTarget,
+                            chembl_id:   chemblId,
+                            duration_ns: duration,
+                            forcefield:  forcefield,
+                            ts:          Date.now()
+                        });
+
+                        // 2초 후 모달 닫고 MD 탭으로 이동
+                        setTimeout(() => {
+                            closeModal();
+                            showPage('dynamics');
+                        }, 2000);
+                    };
+                }
+            })();
         });
     })();
 </script>
+<!-- ── RUN NEW SIMULATION Modal ─────────────────────────────── -->
+<div id="modal-new-sim" class="hidden fixed inset-0 z-[200] items-center justify-center">
+  <!-- 배경 오버레이 -->
+  <div id="modal-overlay" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+  <!-- 모달 패널 -->
+  <div class="relative z-10 glass-panel rounded-2xl p-6 w-full max-w-md flex flex-col gap-5 shadow-2xl border border-primary/30 mx-4" style="background:rgba(16,26,34,0.97)">
+    <!-- 헤더 -->
+    <div class="flex justify-between items-center">
+      <div>
+        <div class="flex items-center gap-2 mb-0.5">
+          <span class="material-symbols-outlined text-primary text-lg">science</span>
+          <h3 class="text-base font-bold text-slate-100">New MD Simulation</h3>
+        </div>
+        <p class="text-[10px] text-slate-500 ml-7">Configure molecular dynamics parameters</p>
+      </div>
+      <button id="modal-close-btn" class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 hover:text-primary hover:bg-slate-700 transition-all">
+        <span class="material-symbols-outlined text-lg">close</span>
+      </button>
+    </div>
+
+    <!-- Divider -->
+    <div class="w-full h-px bg-slate-700/50"></div>
+
+    <!-- Target 선택 -->
+    <div class="flex flex-col gap-2">
+      <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+        <span class="material-symbols-outlined text-xs text-slate-500">hub</span>
+        Target Protein
+      </label>
+      <div class="flex gap-2">
+        <button data-target="CHRNA1" class="sim-target-btn flex-1 py-2 rounded-lg border text-xs transition-all bg-primary/20 border-primary text-primary font-bold">CHRNA1</button>
+        <button data-target="MUSK"   class="sim-target-btn flex-1 py-2 rounded-lg border border-slate-700 text-xs text-slate-400 hover:border-primary/50 hover:text-primary transition-all">MuSK</button>
+        <button data-target="LRP4"   class="sim-target-btn flex-1 py-2 rounded-lg border border-slate-700 text-xs text-slate-400 hover:border-primary/50 hover:text-primary transition-all">LRP4</button>
+      </div>
+    </div>
+
+    <!-- Compound ChEMBL ID -->
+    <div class="flex flex-col gap-2">
+      <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+        <span class="material-symbols-outlined text-xs text-slate-500">medication</span>
+        Compound (ChEMBL ID)
+      </label>
+      <div class="relative">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">search</span>
+        <input id="sim-chembl-input" list="sim-chembl-datalist" type="text" placeholder="e.g. CHEMBL21333"
+          class="w-full bg-slate-800/80 border border-slate-700 rounded-lg pl-9 pr-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-all"/>
+        <datalist id="sim-chembl-datalist"></datalist>
+      </div>
+    </div>
+
+    <!-- Duration + Force Field -->
+    <div class="grid grid-cols-2 gap-3">
+      <div class="flex flex-col gap-2">
+        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+          <span class="material-symbols-outlined text-xs text-slate-500">timer</span>
+          Duration (ns)
+        </label>
+        <input id="sim-duration-input" type="number" value="10" min="1" max="100"
+          class="bg-slate-800/80 border border-slate-700 rounded-lg px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-all"/>
+      </div>
+      <div class="flex flex-col gap-2">
+        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+          <span class="material-symbols-outlined text-xs text-slate-500">tune</span>
+          Force Field
+        </label>
+        <select id="sim-ff-select"
+          class="bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-all">
+          <option value="AMBER">AMBER99SB</option>
+          <option value="CHARMM">CHARMM36</option>
+          <option value="OPLS">OPLS-AA</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 진행 상태 (제출 후 표시) -->
+    <div id="sim-progress-area" class="hidden flex-col gap-2 p-3 bg-primary/5 border border-primary/20 rounded-xl">
+      <div class="flex justify-between items-center text-[10px]">
+        <span class="text-slate-400 flex items-center gap-1">
+          <span class="material-symbols-outlined text-xs text-primary animate-spin">progress_activity</span>
+          Submitting simulation...
+        </span>
+        <span class="text-primary font-bold tracking-wider">QUEUED</span>
+      </div>
+      <div class="w-full h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
+        <div class="h-full bg-primary rounded-full animate-pulse" style="width:35%"></div>
+      </div>
+    </div>
+
+    <!-- 에러 표시 -->
+    <div id="sim-error-area" class="hidden p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
+      <p id="sim-error-msg" class="text-[10px] text-red-400 flex items-center gap-1">
+        <span class="material-symbols-outlined text-xs">error</span>
+        <span></span>
+      </p>
+    </div>
+
+    <!-- Divider -->
+    <div class="w-full h-px bg-slate-700/50"></div>
+
+    <!-- 액션 버튼 -->
+    <div class="flex gap-3 justify-end">
+      <button id="sim-cancel-btn"
+        class="px-4 py-2 rounded-xl border border-slate-700 text-slate-400 text-xs hover:bg-slate-800 hover:border-slate-600 transition-all">
+        Cancel
+      </button>
+      <button id="sim-submit-btn"
+        class="px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold shadow-lg shadow-primary/30 hover:scale-105 hover:brightness-110 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100">
+        <span class="material-symbols-outlined text-sm">rocket_launch</span>
+        Launch Simulation
+      </button>
+    </div>
+  </div>
+</div>
+
 </body></html>

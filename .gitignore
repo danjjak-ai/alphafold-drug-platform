@@ -4799,3 +4799,7 @@ results/docking/musk_CHEMBL4650485_log.txt
 results/docking/musk_CHEMBL4802135_log.txt
 results/docking/musk_CHEMBL5095056_log.txt
 results/docking/musk_CHEMBL5314588_log.txt
+
+# Documentation
+*.md
+!README.md
