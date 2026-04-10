@@ -188,16 +188,16 @@
 <p class="text-sm font-semibold text-slate-100">CHRNA1</p>
 <p class="text-[10px] text-slate-400">AChR alpha subunit</p>
 </div>
-<span class="px-2 py-0.5 rounded text-[10px] bg-green-500/20 text-green-400 font-bold">ACTIVE</span>
+<span id="chrna1-status" class="px-2 py-0.5 rounded text-[10px] bg-green-500/20 text-green-400 font-bold">ACTIVE</span>
 </div>
 <div class="flex items-end justify-between mt-2">
-<div class="text-2xl font-bold text-primary">94.2<span class="text-xs font-normal text-slate-500 ml-1">Score</span></div>
+<div class="text-2xl font-bold text-primary"><span id="chrna1-score-val">94.2</span><span class="text-xs font-normal text-slate-500 ml-1">Score</span></div>
 <div class="text-[10px] text-green-400 flex items-center gap-0.5">
 <span class="material-symbols-outlined text-xs">trending_up</span>+2.1%
                         </div>
 </div>
 <div class="w-full bg-slate-700/50 h-1.5 rounded-full mt-1">
-<div class="bg-primary h-full rounded-full" style="width: 94.2%"></div>
+<div id="chrna1-progress" class="bg-primary h-full rounded-full" style="width: 94.2%"></div>
 </div>
 </div>
 <div class="glass-panel rounded-xl p-4 flex flex-col gap-2">
@@ -206,14 +206,14 @@
 <p class="text-sm font-semibold text-slate-100">MuSK</p>
 <p class="text-[10px] text-slate-400">Muscle-Specific Kinase</p>
 </div>
-<span class="px-2 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-400 font-bold">SCREENING</span>
+<span id="musk-status" class="px-2 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-400 font-bold">SCREENING</span>
 </div>
 <div class="flex items-end justify-between mt-2">
-<div class="text-2xl font-bold text-slate-300">68.5<span class="text-xs font-normal text-slate-500 ml-1">Score</span></div>
+<div class="text-2xl font-bold text-slate-300"><span id="musk-score-val">68.5</span><span class="text-xs font-normal text-slate-500 ml-1">Score</span></div>
 <div class="text-[10px] text-slate-400">Stable</div>
 </div>
 <div class="w-full bg-slate-700/50 h-1.5 rounded-full mt-1">
-<div class="bg-slate-500 h-full rounded-full" style="width: 68.5%"></div>
+<div id="musk-progress" class="bg-slate-500 h-full rounded-full" style="width: 68.5%"></div>
 </div>
 </div>
 </div>
@@ -586,6 +586,22 @@
                     if(args.musk_score) setVal('musk-score-val', args.musk_score);
                     if(args.lrp4_score) setVal('lrp4-score-val', args.lrp4_score);
                     if(args.chrna1_progress) setPct('chrna1-progress', args.chrna1_progress);
+                    if(args.musk_progress) setPct('musk-progress', args.musk_progress);
+                    if(args.lrp4_progress) setPct('lrp4-progress', args.lrp4_progress);
+
+                    const updateStatus = (id, text) => {
+                        const n = el(id);
+                        if (!n) return;
+                        n.innerText = text;
+                        n.className = "px-2 py-0.5 rounded text-[10px] font-bold ";
+                        if (text === "ACTIVE") n.className += "bg-green-500/20 text-green-400";
+                        else if (text === "SCREENING") n.className += "bg-amber-500/20 text-amber-400";
+                        else n.className += "bg-slate-500/20 text-slate-400";
+                    };
+                    
+                    if(args.chrna1_status) updateStatus('chrna1-status', args.chrna1_status);
+                    if(args.musk_status) updateStatus('musk-status', args.musk_status);
+                    
                     if(args.viewer_complex) setVal('viewer-complex-title', args.viewer_complex);
                     if(args.viewer_source) setVal('viewer-source-label', args.viewer_source);
                     if(args.viewer_ligand) setVal('viewer-ligand-label', args.viewer_ligand);

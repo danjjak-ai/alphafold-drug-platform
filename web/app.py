@@ -684,16 +684,31 @@ def main():
         st.session_state.selected_md_sim = md_history[0]["sim_id"]
     md_metrics = get_md_metrics(st.session_state.selected_md_sim) if st.session_state.selected_md_sim else {}
 
+    def get_status_text(progress_str):
+        try:
+            p = float(progress_str)
+            if p <= 0: return "PENDING"
+            elif p >= 100: return "ACTIVE"
+            else: return "SCREENING"
+        except: return "PENDING"
+
+    chrna1_status = get_status_text(stats.get('chrna1', {}).get('progress', '0'))
+    musk_status = get_status_text(stats.get('musk', {}).get('progress', '0'))
+    lrp4_status = get_status_text(stats.get('lrp4', {}).get('progress', '0'))
+
     # Component Output
     comp_value = st_dashboard(
         table_html=table_content, 
         ai_html=chat_html,
         chrna1_score=stats.get('chrna1', {}).get('score', '0.0'),
         chrna1_progress=stats.get('chrna1', {}).get('progress', '0'),
+        chrna1_status=chrna1_status,
         musk_score=stats.get('musk', {}).get('score', '0.0'),
         musk_progress=stats.get('musk', {}).get('progress', '0'),
+        musk_status=musk_status,
         lrp4_score=stats.get('lrp4', {}).get('score', '0.0'),
         lrp4_progress=stats.get('lrp4', {}).get('progress', '0'),
+        lrp4_status=lrp4_status,
         viewer_complex=f"{target_name} : {st.session_state.selected_id} Binding" if target_name else f"Analysis : {st.session_state.selected_id}",
         viewer_source=f"[구조 출처] {target_source_label}",
         viewer_ligand=f"Ligand {st.session_state.selected_id}",

@@ -75,9 +75,9 @@
 | **Phase 1** | 데이터 파이프라인 구축 | **완료** | ChEMBL/UniProt 연동 및 DB화 |
 | **Phase 2** | 가상 스크리닝 시스템 | **완료** | Vina Batch 도킹 및 3D 뷰어 |
 | **Phase 3** | AI 활성 예측 모델 | **완료** | GCN/RF 모델 기반 활성 추론 |
-| **Phase 4** | LLM RAG 기반 기전 설명 | **미구현** | LangChain/ChromaDB 연동 예정 |
-| **Phase 5** | MM-GBSA 정밀 재채점 | **미구현** | AmberTools 기반 스코어 보정 예정 |
-| **Phase 6** | 최종 결과 보고서 자동화 | **미구현** | PDF 및 분석 리포트 생성 기능 |
+| **Phase 4** | LLM RAG 기반 기전 설명 | **완료** | Ollama(Llama 3.2) 기반 로컬 분석 엔진 |
+| **Phase 5** | MM-GBSA 정밀 재채점 | **완료** | AmberTools 연동 시뮬레이션 및 스코어 보정 |
+| **Phase 6** | 최종 결과 보고서 자동화 | **완료** | Markdown/PDF 분석 리포트 생성 기능 |
 
 ---
 
@@ -130,10 +130,10 @@ Automated screening steps (Execute via `run_pipeline.bat` on Windows):
 ## 🗺️ Implementation Roadmap (Status)
 - [x] **Phase 1**: Data Pipeline (Done)
 - [x] **Phase 2**: Virtual Screening (Done)
-- [x] **Phase 3**: AI Activity Prediction (Done - Baseline model implemented)
-- [ ] **Phase 4**: LLM RAG-powered Mechanistic Insights (**Unimplemented**)
-- [ ] **Phase 5**: MM-GBSA Precision Rescoring (**Unimplemented**)
-- [ ] **Phase 6**: Automated Analytical Reporting (**Unimplemented**)
+- [x] **Phase 3**: AI Activity Prediction (Done - GCN/RF Models)
+- [x] **Phase 4**: LLM RAG-powered Mechanistic Insights (Done - Ollama Llama 3.2)
+- [x] **Phase 5**: MM-GBSA Precision Rescoring (Done - AmberTools Integration)
+- [x] **Phase 6**: Automated Analytical Reporting (Done - Markdown Report Generator)
 
 ---
 
@@ -186,10 +186,10 @@ Automated screening steps (Execute via `run_pipeline.bat` on Windows):
 ## 🗺️ ロードマップと進捗状況 (Status)
 - [x] **Phase 1**: データパイプライン構築 (完了)
 - [x] **Phase 2**: 仮想スクリーニングシステム (完了)
-- [x] **Phase 3**: AI 活性予測モデル (完了 - ベースライン実装済み)
-- [ ] **Phase 4**: LLM RAG による機序説明生成 (**未実装**)
-- [ ] **Phase 5**: MM-GBSA 精密再スコアリング (**未実装**)
-- [ ] **Phase 6**: 自動分析レポート生成機能 (**未実装**)
+- [x] **Phase 3**: AI 活性予測モデル (完了 - GCN/RF モデル)
+- [x] **Phase 4**: LLM RAG による機序説明生成 (完了 - Ollama Llama 3.2 搭載)
+- [x] **Phase 5**: MM-GBSA 精密再スコアリング (完了 - AmberTools 連携済み)
+- [x] **Phase 6**: 自動分析レポート生成機能 (完了 - Markdown レポート生成)
 
 ---
 
