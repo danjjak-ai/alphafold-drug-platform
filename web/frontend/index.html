@@ -60,6 +60,7 @@
 <a class="text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" id="nav-dynamics" href="javascript:showPage('dynamics')">Molecular Dynamics</a>
 <a class="text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" id="nav-library" href="javascript:showPage('library')">Library</a>
 <a class="text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" id="nav-simulations" href="javascript:showPage('simulations')">Simulations</a>
+<a class="text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" id="nav-admin" href="javascript:showPage('admin')">Admin</a>
 </nav>
 <div class="flex gap-2">
 <button class="flex items-center justify-center rounded-lg h-10 w-10 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-all">
@@ -461,6 +462,55 @@
 </div>
 </section>
 </main>
+
+<!-- Admin Page -->
+<div id="page-admin" class="flex-1 hidden flex-col p-6 animate-in slide-in-from-bottom-4 duration-500 overflow-y-auto custom-scrollbar">
+    <div class="flex flex-col gap-6 w-full max-w-4xl mx-auto">
+        <div>
+            <h2 class="text-2xl font-bold text-slate-100">Admin Panel</h2>
+            <p class="text-xs text-slate-500">Pipeline Execution Configuration</p>
+        </div>
+        <div class="glass-panel rounded-2xl p-6 flex flex-col gap-6 border border-slate-700/50">
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-bold text-slate-300">Target Disease</label>
+                <div class="flex gap-2">
+                    <input id="admin-disease-input" type="text" placeholder="e.g., 중증근무력증, 筋無力症, Alzheimer" class="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-primary w-full max-w-md">
+                    <button id="btn-search-disease" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs font-bold transition-colors">Find Exact Terms</button>
+                </div>
+                <div id="disease-suggestions" class="flex flex-wrap gap-2 mt-2 hidden">
+                    <!-- Suggested terms will be injected here -->
+                </div>
+            </div>
+            
+            <div class="flex flex-col gap-2 mt-2">
+                <label class="text-sm font-bold text-slate-300">Pipeline Execution Environment</label>
+                <div class="flex gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer p-3 border border-primary bg-primary/10 rounded-lg flex-1">
+                        <input type="radio" name="exec_env" value="colab" class="text-primary focus:ring-primary bg-slate-800 border-slate-600" checked>
+                        <div>
+                            <p class="text-sm font-bold text-slate-200">Google Colab (Recommended)</p>
+                            <p class="text-[10px] text-slate-400">Uses cloud GPU for heavy docking and AI models. Generates a .ipynb and download script.</p>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer p-3 border border-slate-700 bg-slate-800/30 rounded-lg flex-1 hover:bg-slate-800/50">
+                        <input type="radio" name="exec_env" value="local" class="text-primary focus:ring-primary bg-slate-800 border-slate-600">
+                        <div>
+                            <p class="text-sm font-bold text-slate-200">Local PC</p>
+                            <p class="text-[10px] text-slate-400">Runs locally. Requires powerful GPU and AutoDock Vina installed locally.</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-700/50 flex justify-end">
+                <button id="btn-start-pipeline" class="px-6 py-2 rounded-xl bg-primary shadow-lg shadow-primary/20 text-white text-sm font-bold hover:scale-105 transition-transform flex items-center gap-2">
+                    <span class="material-symbols-outlined">play_circle</span>
+                    Initialize Pipeline
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- Bottom Action Bar / Status -->
 <footer class="bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-6 py-2 flex justify-between items-center z-50">
 <div class="flex gap-6 items-center">
@@ -489,9 +539,9 @@
 <script>
     // ── SPA Page Switcher ──────────────────────────────────────────
     window.showPage = function(pageId) {
-        const pages = ['page-dynamics', 'page-library', 'page-simulations'];
+        const pages = ['page-dynamics', 'page-library', 'page-simulations', 'page-admin'];
         const main = document.querySelector('main');
-        const navIds = { 'dashboard': 'nav-dashboard', 'dynamics': 'nav-dynamics', 'library': 'nav-library', 'simulations': 'nav-simulations' };
+        const navIds = { 'dashboard': 'nav-dashboard', 'dynamics': 'nav-dynamics', 'library': 'nav-library', 'simulations': 'nav-simulations', 'admin': 'nav-admin' };
         if (pageId === 'dashboard') {
             if (main) main.style.display = '';
             pages.forEach(p => { const el2 = document.getElementById(p); if(el2) el2.style.display = 'none'; });
@@ -607,6 +657,21 @@
                     if(args.viewer_ligand) setVal('viewer-ligand-label', args.viewer_ligand);
                     if(args.mechanism_inference) setVal('mechanism-inference', args.mechanism_inference);
                     if(args.mechanism_coeff) setVal('mechanism-coeff', args.mechanism_coeff);
+                    
+                    if(args.disease_term_candidates) {
+                        const suggContainer = el('disease-suggestions');
+                        if (suggContainer) {
+                            suggContainer.innerHTML = '';
+                            suggContainer.classList.remove('hidden');
+                            args.disease_term_candidates.forEach(term => {
+                                const btn = document.createElement('button');
+                                btn.className = 'px-3 py-1 bg-primary/20 border border-primary/40 hover:bg-primary/40 text-primary rounded-full text-[10px] font-bold transition-colors';
+                                btn.innerText = term;
+                                btn.onclick = () => { el('admin-disease-input').value = term; };
+                                suggContainer.appendChild(btn);
+                            });
+                        }
+                    }
 
                     if (args.binding_residues) drawBindingDiagram(args.binding_residues, args.mechanism_coeff || '0.8', args.chembl_id || '');
 
@@ -748,6 +813,23 @@
             
             // 1. Dashboard Actions
             if(el('btn-view-all')) el('btn-view-all').onclick = () => Streamlit.setComponentValue({action: 'view_all_candidates', ts: Date.now()});
+            if(el('btn-start-pipeline')) el('btn-start-pipeline').onclick = () => {
+                const disease = el('admin-disease-input') ? el('admin-disease-input').value : 'Myasthenia Gravis';
+                const env = document.querySelector('input[name="exec_env"]:checked').value;
+                Streamlit.setComponentValue({action: 'start_pipeline', disease: disease, env: env, ts: Date.now()});
+                alert(`Pipeline initialized for ${disease} via ${env}. Check backend logs.`);
+            };
+            if(el('btn-search-disease')) el('btn-search-disease').onclick = () => {
+                const query = el('admin-disease-input').value;
+                if(query) {
+                    const suggContainer = el('disease-suggestions');
+                    if(suggContainer) {
+                        suggContainer.innerHTML = '<span class="text-xs text-slate-500 animate-pulse">Searching formal terms...</span>';
+                        suggContainer.classList.remove('hidden');
+                    }
+                    Streamlit.setComponentValue({action: 'search_disease_terms', query: query, ts: Date.now()});
+                }
+            };
             
             // 2. AI Chat
             if(el('ai-send-btn')) el('ai-send-btn').onclick = () => { 

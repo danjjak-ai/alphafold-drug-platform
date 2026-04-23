@@ -727,6 +727,7 @@ def main():
         simulations_html=generate_simulations_html(get_simulations_data()),
         md_history=md_history,
         md_metrics=md_metrics,
+        disease_term_candidates=st.session_state.get('disease_term_candidates', []),
         key="mg_dash_comp"
     )
 
@@ -785,6 +786,48 @@ def main():
                         print(f"[app] New simulation queued: {result['sim_id']}")
                     else:
                         print(f"[app] Simulation failed: {result.get('error')}")
+                st.rerun()
+
+            elif action == "start_pipeline":
+                disease = comp_value.get("disease", "Myasthenia Gravis")
+                env = comp_value.get("env", "colab")
+                import subprocess, os
+                
+                if env == "local":
+                    print(f"[app] Starting local pipeline for {disease}...")
+                    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                    bat_path = os.path.join(base_dir, "run_pipeline.bat")
+                    if os.path.exists(bat_path):
+                        # Run via subprocess (non-blocking for UI)
+                        subprocess.Popen(f'start cmd /k "{bat_path}"', cwd=base_dir, shell=True)
+                    else:
+                        print("[app] run_pipeline.bat not found.")
+                else:
+                    print(f"[app] Preparing Colab pipeline for {disease}...")
+                    # For Colab, we guide the user to upload the notebook.
+                    st.session_state.chat_history.append({
+                        "role": "assistant", 
+                        "text": f"Colab Pipeline configured for **{disease}**.\n\nPlease open `Discovery_Core_Colab_Pipeline.ipynb` in Google Colab, upload the notebook, and run all cells.\n\nAfter completion, download `discovery_results.zip` and run `import_results.bat` locally."
+                    })
+                st.rerun()
+
+            elif action == "search_disease_terms":
+                query = comp_value.get("query", "")
+                print(f"[app] Searching formal terms for: {query}")
+                prompt = f"Translate the disease name '{query}' into the exact formal English medical terms used in databases like ChEMBL, UniProt, or MeSH. Return ONLY a comma-separated list of the 3 most accurate terms. Do not include any other text, explanation, or numbering. E.g. Myasthenia Gravis, Alzheimer Disease, Parkinson Disease"
+                
+                response = call_ollama(prompt, context="")
+                # Clean up response into a list
+                terms = [t.strip() for t in response.split(",") if t.strip()]
+                # Fallback if the LLM didn't return a comma separated list
+                if len(terms) == 1 and '\n' in terms[0]:
+                     terms = [t.strip('- *1234567890.') for t in response.split('\n') if t.strip()]
+                
+                # Limit to 3 items
+                terms = terms[:3]
+                if not terms:
+                    terms = ["Term search failed. Check local LLM."]
+                st.session_state.disease_term_candidates = terms
                 st.rerun()
 
 if __name__ == "__main__":
