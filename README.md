@@ -16,6 +16,7 @@
 [![RDKit](https://img.shields.io/badge/RDKit-2023.09+-1D9E75?style=flat-square)](https://www.rdkit.org)
 [![AutoDock Vina](https://img.shields.io/badge/AutoDock_Vina-1.2.5-FF6B35?style=flat-square)](https://vina.scripps.edu)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)](https://streamlit.io)
+[![Google Colab](https://img.shields.io/badge/Google_Colab-F9AB00?style=flat-square&logo=googlecolab&logoColor=white)](https://colab.research.google.com)
 
 </div>
 
@@ -37,34 +38,46 @@
 ---
 
 ## 🚀 주요 기능 및 시스템 아키텍처 (Technical)
-본 플랫폼은 데이터 수집부터 AI 모델링, 시각화까지 전 과정을 자동화한 엔드투엔드 파이프라인을 제공합니다.
+본 플랫폼은 데이터 수집부터 AI 모델링, 시각화까지 전 과정을 자동화한 엔드투엔드 파이프라인을 제공합니다. 특히 **로컬 리소스의 한계를 극복하기 위해 Google Colab과의 하이브리드 연동**을 지원합니다.
 
 ### 🛠️ 기술 스택
 - **Cheminformatics**: RDKit (분자 전처리), Meeko (PDBQT 변환), ChEMBL API (데이터 소스)
 - **AI/ML 모델링**: PyTorch, PyTorch Geometric, DeepChem (GCN, EGNN 기반 활성 예측)
-- **Simulation**: AutoDock Vina 1.2.5 (Batch 도킹), MDAnalysis (`미구현`)
+- **Simulation**: AutoDock Vina 1.2.5 (Batch 도킹), AmberTools (MM-GBSA)
 - **Frontend/UI**: Streamlit, Tailwind CSS (UI 디자인), 3Dmol.js (3D 분자 렌더링)
-- **Infrastructure**: **uv** (Package Manager), Docker, Google Cloud Run
+- **Infrastructure**: **Google Colab (Backend)**, **uv** (Local Package Manager), Ollama (Local RAG)
 
 ### 💻 시스템 요구사항
-| 구분 | 최소 사양 | 권장 사양 |
+| 구분 | 로컬 단독 실행 시 | Colab 하이브리드 실행 시 (권장) |
 |---|---|---|
-| **GPU** | NVIDIA GPU 8GB VRAM | NVIDIA RTX 3090/4090 24GB |
-| **RAM** | 32 GB | 64 GB 이상 |
-| **OS** | Windows 10/11 | Ubuntu 22.04 LTS |
+| **GPU** | NVIDIA 8GB VRAM 이상 | **불필요 (Colab GPU 활용)** |
+| **RAM** | 32 GB 이상 | 16 GB 이상 |
+| **OS** | Windows 10/11, Ubuntu | Windows 10/11, Ubuntu |
+
+---
+
+## ☁️ Google Colab 클라우드 파이프라인
+고사양 GPU가 없거나 대규모 병렬 도킹이 필요한 경우 Google Colab을 통해 백엔드 연산을 수행할 수 있습니다.
+
+1.  **Colab 실행**: `Discovery_Core_Colab_Pipeline.ipynb` 파일을 Google Colab에서 엽니다.
+2.  **데이터 처리**: 노트북의 셀을 순차적으로 실행하여 데이터 수집, 도킹, AI 학습을 진행합니다.
+3.  **결과 다운로드**: 모든 과정이 끝나면 `discovery_results.zip` 파일이 자동으로 다운로드됩니다.
+4.  **로컬 임포트**: 다운로드된 압축 파일을 프로젝트 루트 폴더에 넣고 `import_results.bat`를 실행합니다.
+5.  **대시보드 확인**: `start_dashboard.bat`를 실행하여 결과를 확인합니다.
 
 ---
 
 ## 🧬 전체 데이터 파이프라인 (Execution)
-일관된 결과를 위해 다음 단계로 스크리닝을 진행합니다 (`run_pipeline.bat` 사용 시 자동화):
+로컬에서 전체 과정을 직접 실행하려면 다음 단계를 따릅니다 (`run_pipeline.bat` 사용 시 자동화):
 
 1.  **DB 초기화**: SQLite DB(`mg_discovery.db`) 스키마 생성.
 2.  **타겟 및 약물 수집**: UniProt 및 ChEMBL API를 통해 질환 관련 데이터 수집.
-3.  **구조 예측 (`predict_structures.py`)**: ESMFold 및 AlphaFold2를 활용한 3D 단백질 구조 생성.
+3.  **구조 예측**: ESMFold 및 AlphaFold2를 활용한 3D 단백질 구조 생성.
 4.  **전처리**: 리간드(LIG) 및 수용체(REC)의 .pdbqt 변환.
-5.  **가상 스크리닝 (`run_docking.py`)**: AutoDock Vina를 이용한 대규모 병렬 도킹.
-6.  **AI 활성 예측**: 도킹 결과를 기반으로 GCN 모델을 통한 복합체 활성 예측.
-7.  **대시보드 분석**: Streamlit 기반의 인터랙티브 결과 웹 앱 실행.
+5.  **가상 스크리닝**: AutoDock Vina를 이용한 대규모 병렬 도킹.
+6.  **AI 활성 예측**: GCN 모델을 통한 복합체 활성 예측 및 재채점.
+7.  **MM-GBSA 보정**: AmberTools를 이용한 결합 에너지 정밀 계산.
+8.  **대시보드 분석**: Streamlit 기반의 인터랙티브 결과 웹 앱 실행.
 
 ---
 
@@ -78,6 +91,7 @@
 | **Phase 4** | LLM RAG 기반 기전 설명 | **완료** | Ollama(Llama 3.2) 기반 로컬 분석 엔진 |
 | **Phase 5** | MM-GBSA 정밀 재채점 | **완료** | AmberTools 연동 시뮬레이션 및 스코어 보정 |
 | **Phase 6** | 최종 결과 보고서 자동화 | **완료** | Markdown/PDF 분석 리포트 생성 기능 |
+| **Phase 7** | **Colab 클라우드 연동** | **완료** | 고성능 백엔드 이관 및 데이터 임포터 구축 |
 
 ---
 
@@ -97,21 +111,32 @@ MG is caused by autoantibodies blocking signal transmission at the Neuromuscular
 ---
 
 ## 🚀 Key Features & Architecture (Technical)
-An end-to-end automated pipeline from data collection to AI modeling and visualization.
+An end-to-end automated pipeline from data collection to AI modeling and visualization. Now supporting **Hybrid Cloud integration with Google Colab** to overcome local resource constraints.
 
 ### 🛠️ Tech Stack
-- **Cheminformatics**: RDKit (Preprocessing), Meeko (PDBQT), ChEMBL API.
+- **Cheminformatics**: RDKit, Meeko, ChEMBL API.
 - **AI/ML Modeling**: PyTorch, PyG, DeepChem (GCN, EGNN-based prediction).
-- **Simulation**: AutoDock Vina 1.2.5 (Batch Docking), MDAnalysis (`Unimplemented`).
-- **Dashboard**: Streamlit, Tailwind CSS, 3Dmol.js (3D visualization).
-- **Infrastructure**: **uv** (Package Manager), Docker, Google Cloud Run.
+- **Simulation**: AutoDock Vina 1.2.5, AmberTools (MM-GBSA).
+- **Frontend/UI**: Streamlit, Tailwind CSS, 3Dmol.js (3D visualization).
+- **Infrastructure**: **Google Colab (Backend)**, **uv** (Local Manager), Ollama (Local RAG).
 
 ### 💻 System Requirements
-| Component | Minimum | Recommended |
+| Component | Local Standalone | Colab Hybrid (Recommended) |
 |---|---|---|
-| **GPU** | 8GB VRAM | 24GB VRAM (RTX 4090) |
-| **RAM** | 32 GB | 64 GB+ |
-| **OS** | Windows 10/11 | Ubuntu 22.04 LTS |
+| **GPU** | 8GB+ VRAM | **Optional (Uses Colab GPU)** |
+| **RAM** | 32 GB | 16 GB |
+| **OS** | Windows 10/11, Ubuntu | Windows 10/11, Ubuntu |
+
+---
+
+## ☁️ Google Colab Cloud Pipeline
+If you lack a high-end GPU or need large-scale docking, use the cloud-based backend.
+
+1.  **Open Notebook**: Open `Discovery_Core_Colab_Pipeline.ipynb` in Google Colab.
+2.  **Process Data**: Run all cells to perform data collection, docking, and AI training.
+3.  **Download Results**: After completion, `discovery_results.zip` will be downloaded automatically.
+4.  **Import Locally**: Place the zip file in the project root and run `import_results.bat`.
+5.  **Visualize**: Run `start_dashboard.bat` to explore the results in the dashboard.
 
 ---
 
@@ -122,7 +147,7 @@ Automated screening steps (Execute via `run_pipeline.bat` on Windows):
 3. **Predict Structure**: Generate 3D models using ESMFold or AlphaFold2.
 4. **Prepare Structures**: Convert ligands and receptors to .pdbqt format.
 5. **Virtual Screening**: High-throughput docking with AutoDock Vina.
-6. **Activity Prediction**: Infer binding activity using GCN models.
+6. **Activity Prediction**: binding activity prediction & MM-GBSA rescoring.
 7. **Analytics**: Launch interactive dashboard via Streamlit.
 
 ---
@@ -130,20 +155,21 @@ Automated screening steps (Execute via `run_pipeline.bat` on Windows):
 ## 🗺️ Implementation Roadmap (Status)
 - [x] **Phase 1**: Data Pipeline (Done)
 - [x] **Phase 2**: Virtual Screening (Done)
-- [x] **Phase 3**: AI Activity Prediction (Done - GCN/RF Models)
-- [x] **Phase 4**: LLM RAG-powered Mechanistic Insights (Done - Ollama Llama 3.2)
-- [x] **Phase 5**: MM-GBSA Precision Rescoring (Done - AmberTools Integration)
-- [x] **Phase 6**: Automated Analytical Reporting (Done - Markdown Report Generator)
+- [x] **Phase 3**: AI Activity Prediction (Done)
+- [x] **Phase 4**: LLM RAG-powered Insights (Done)
+- [x] **Phase 5**: MM-GBSA Precision Rescoring (Done)
+- [x] **Phase 6**: Automated Analytical Reporting (Done)
+- [x] **Phase 7**: **Colab Cloud Integration** (Done)
 
 ---
 
 # 🇯🇵 日本語
 
 ## 📖 プロジェクト背景 (Research)
-**Discovery Core** は、希少神経筋疾患である **重症筋無力症 (Myasthenia Gravis, MG)** の治療薬開発を加速させるため、製薬知識と AI 技術を統合したプラットフォームです。
+**Discovery Core** は、希少神経筋疾患である **重症筋無力症 (Myasthenia Gravis, MG)** の治療薬開発を加速させるプラットフォームです.
 
 ### 1. 疾患の概要
-重症筋無力症は、神経筋接合部 (NMJ) において自己抗体が信号伝達を遮断することで発生する疾患です。筋力低下を引き起こし、患者の約 10〜15% は既存の治療法に反応しない **難治性 MG (Refractory MG)** を呈します。本プロジェクトは、安全性が証明済みの FDA 承認薬の中から新たな機序を探索する **ドラッグリパーパシング (既存薬再開発)** 戦略を採用しています。
+神経筋接合部 (NMJ) において自己抗体が信号伝達を遮断することで発生する疾患です。筋力低下を引き起こし、患者の約 10〜15% は既存の治療法に反応しない **難治性 MG (Refractory MG)** を呈します。本プロジェクトは、安全性が証明済みの FDA 承認薬の中から新たな機序を探索する **ドラッグリパーパシング (既存薬再開発)** 戦略を採用しています。
 
 ### 2. 主要な生物学的標的
 - **CHRNA1 (AChR α1)**: 自己抗体の主要な標的。受容体の分解を防ぎ、イオンチャネルの開放を安定化させる化合物を探索します。
@@ -183,13 +209,9 @@ Automated screening steps (Execute via `run_pipeline.bat` on Windows):
 
 ---
 
-## 🗺️ ロードマップと進捗状況 (Status)
-- [x] **Phase 1**: データパイプライン構築 (完了)
-- [x] **Phase 2**: 仮想スクリーニングシステム (完了)
-- [x] **Phase 3**: AI 活性予測モデル (完了 - GCN/RF モデル)
-- [x] **Phase 4**: LLM RAG による機序説明生成 (完了 - Ollama Llama 3.2 搭載)
-- [x] **Phase 5**: MM-GBSA 精密再スコアリング (完了 - AmberTools 連携済み)
-- [x] **Phase 6**: 自動分析レポート生成機能 (完了 - Markdown レポート生成)
+## 🗺️ 進捗状況 (Status)
+- [x] **Phase 1-6**: 基本機能の実装 (完了)
+- [x] **Phase 7**: **Colab クラウド連携** (完了)
 
 ---
 
@@ -201,6 +223,8 @@ alphafold-drug-platform/
 ├── 📂 web/                # Streamlit dashboard & React components
 ├── 📂 results/            # Simulation outputs and CSV reports
 ├── 📂 models/             # Pre-trained ML model checkpoints
+├── Discovery_Core_Colab_Pipeline.ipynb  # Colab Pipeline Notebook
+├── import_results.bat     # Colab Result Importer (Windows)
 └── requirements.txt       # Project dependencies
 ```
 
