@@ -17,6 +17,12 @@ def generate_report(db_path, output_dir):
 
     conn = sqlite3.connect(db_path)
     
+    # Get target list for the report
+    cursor = conn.cursor()
+    cursor.execute("SELECT gene_name FROM targets")
+    genes = [row[0] for row in cursor.fetchall() if row[0]]
+    gene_str = ", ".join(genes) if genes else "specified targets"
+    
     # query top candidates
     query = """
     SELECT 
@@ -44,17 +50,17 @@ def generate_report(db_path, output_dir):
 
     date_str = datetime.now().strftime("%Y-%m-%d")
 
-    md_content = f"""# Executive Summary: Myasthenia Gravis (MG) Drug Repurposing
+    md_content = f"""# Executive Summary: Drug Repurposing Discovery Report
 **Generated Date:** {date_str}
 
 ## 1. Project Overview
-This report summarizes the findings from the MG Discovery Core platform. The goal is to identify promising FDA-approved (or late clinical phase) drugs that can be repurposed for the treatment of Myasthenia Gravis, targeting key neuromuscular junction proteins (CHRNA1, MuSK, LRP4).
+This report summarizes the findings from the Discovery Core platform. The goal is to identify promising FDA-approved (or late clinical phase) drugs that can be repurposed, targeting key proteins ({gene_str}).
 
 ## 2. Methodology
-* **Target Structures:** Pre-processed structural models generated via AlphaFold.
+* **Target Structures:** Structural models generated via AlphaFold or fetched from RCSB PDB.
 * **Virtual Screening:** Molecular docking performed using AutoDock Vina.
 * **Refinement:** High-scoring candidates underwent MM-GBSA rescoring (AmberTools).
-* **AI Evaluation:** Activity probabilities assessed using DeepPurpose/Chemprop models.
+* **AI Evaluation:** Activity probabilities assessed using Baseline Machine Learning models.
 
 ## 3. Top 10 Candidate Drugs
 

@@ -87,7 +87,7 @@ def run_docking_batch(db_path, vina_exe):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
-    cursor.execute("SELECT id, uniprot_id, gene_name FROM targets")
+    cursor.execute("SELECT id, gene_name, structure_path FROM targets")
     targets = cursor.fetchall()
     
     cursor.execute("SELECT id, chembl_id FROM compounds")
@@ -96,16 +96,17 @@ def run_docking_batch(db_path, vina_exe):
     
     # Pre-calculate centers
     target_info = []
-    for tg_id, uniprot_id, gene_name in targets:
-        # Map gene name to file
-        path = ""
-        if gene_name == "CHRNA1": path = "data/structures/targets/chrna1.pdbqt"
-        elif gene_name == "MUSK": path = "data/structures/targets/musk.pdbqt"
-        elif gene_name == "LRP4": path = "data/structures/targets/lrp4.pdbqt"
+    for tg_id, gene_name, structure_path in targets:
+        path = structure_path
+        # Fallback to default naming convention if path not in DB
+        if not path or not os.path.exists(path):
+            if gene_name:
+                path = os.path.join("data", "structures", "targets", f"{gene_name.lower()}.pdbqt")
         
-        if os.path.exists(path):
+        if path and os.path.exists(path):
             center = get_receptor_center(path)
             target_info.append((tg_id, path, center))
+
     
     # Task list (Target x Compound)
     tasks = []

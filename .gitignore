@@ -4804,3 +4804,6 @@ results/docking/musk_CHEMBL5314588_log.txt
 # Documentation
 *.md
 !README.md
+
+# Stitch Assets
+stitch_assets/

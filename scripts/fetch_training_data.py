@@ -1,6 +1,7 @@
 from chembl_webresource_client.new_client import new_client
 import pandas as pd
 import os
+import sys
 
 def fetch_assay_data_by_accession(accession, target_name):
     print(f"Fetching ChEMBL assay data for {target_name} ({accession})...")
@@ -23,13 +24,22 @@ def fetch_assay_data_by_accession(accession, target_name):
     return df
 
 if __name__ == "__main__":
-    # Correct PDB/UniProt-mapped accessions
-    targets = [
-        ("P02708", "CHRNA1"),
-        ("O15146", "MUSK"),
-        ("O75096", "LRP4")
-    ]
+    db_path = os.path.join("data", "mg_discovery.db")
+    if not os.path.exists(db_path):
+        print(f"Database not found at {db_path}. Please run fetch_targets.py first.")
+        sys.exit(1)
+        
+    import sqlite3
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("SELECT uniprot_id, gene_name FROM targets")
+    targets = cursor.fetchall()
+    conn.close()
     
+    if not targets:
+        print("No targets found in database. Please run fetch_targets.py first.")
+        sys.exit(0)
+        
     os.makedirs("data/processed", exist_ok=True)
     all_data = []
     for accession, name in targets:
@@ -44,3 +54,4 @@ if __name__ == "__main__":
         print(f"Completed fetching training data. Total: {len(final_df)} rows")
     else:
         print("No training data found.")
+

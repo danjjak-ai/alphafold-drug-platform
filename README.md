@@ -4,8 +4,8 @@
 
 # 🧬 Discovery Core (RareTarget Discovery)
 
-### AI-Powered Drug Repurposing Platform for Rare Neuromuscular Disease
-**AI-driven screening and data pipeline for Myasthenia Gravis (MG) drug discovery.**
+### AI-Powered Dynamic Drug Repurposing Platform
+**Any disease input, automatic target/drug fetching, and AI-driven screening pipeline.**
 
 **[한국어](#-한국어) · [English](#-english) · [日本語](#-日本語)**
 
@@ -25,7 +25,7 @@
 # 🇰🇷 한국어
 
 ## 📖 프로젝트 배경 (Research)
-**Discovery Core**는 희귀 신경근 자가면역 질환인 **중증근무력증(Myasthenia Gravis, MG)**의 치료제 개발을 가속화하기 위해 제약 지식과 IT 기술을 결합한 플랫폼입니다.
+**Discovery Core**는 특정 질환에 국한되지 않고, 사용자가 입력한 **어떠한 질환**에 대해서도 관련 타겟과 약물을 자동으로 수집하여 분석하는 범용 AI 약물 재창출 플랫폼입니다.
 
 ### 1. 질환 개요
 중증근무력증은 신경근 접합부(NMJ)에서 자가항체에 의해 신호 전달이 차단되어 발생하는 질환입니다. 안검하수, 사지 근력 약화 등을 초래하며, 약 10~15%의 환자는 기존 치료제에 반응하지 않는 **치료 저항성(Refractory MG)**을 보입니다. 본 프로젝트는 이러한 미충족 의료 수요를 해결하기 위해 이미 안전성이 검증된 FDA 승인 약물 중에서 새로운 기전을 찾는 **약물 재창출(Drug Repurposing)** 전략을 채택합니다.
@@ -71,8 +71,8 @@
 로컬에서 전체 과정을 직접 실행하려면 다음 단계를 따릅니다 (`run_pipeline.bat` 사용 시 자동화):
 
 1.  **DB 초기화**: SQLite DB(`mg_discovery.db`) 스키마 생성.
-2.  **타겟 및 약물 수집**: UniProt 및 ChEMBL API를 통해 질환 관련 데이터 수집.
-3.  **구조 예측**: ESMFold 및 AlphaFold2를 활용한 3D 단백질 구조 생성.
+2.  **질환 기반 데이터 수집**: 사용자 입력 질환명(예: Alzheimer, MG 등)을 바탕으로 UniProt 및 ChEMBL API를 통해 관련 타겟 및 약물 자동 수집.
+3.  **구조 예측**: 수집된 타겟의 PDB 정보를 확인하고, ESMFold 및 AlphaFold2를 활용하여 3D 구조 자동 준비.
 4.  **전처리**: 리간드(LIG) 및 수용체(REC)의 .pdbqt 변환.
 5.  **가상 스크리닝**: AutoDock Vina를 이용한 대규모 병렬 도킹.
 6.  **AI 활성 예측**: GCN 모델을 통한 복합체 활성 예측 및 재채점.
@@ -98,7 +98,7 @@
 # 🇺🇸 English
 
 ## 📖 Background (Research)
-**Discovery Core** is an integrated platform combining pharmaceutical knowledge and AI technology to accelerate the development of treatments for **Myasthenia Gravis (MG)**, a rare neuromuscular autoimmune disease.
+**Discovery Core** is a universal AI drug repurposing platform that automatically collects and analyzes relevant targets and drugs for **any disease** entered by the user, moving beyond specific disease constraints.
 
 ### 1. Disease Overview
 MG is caused by autoantibodies blocking signal transmission at the Neuromuscular Junction (NMJ). It leads to muscle weakness, and approximately 10-15% of patients show **Refractory MG**, failing to respond to conventional treatments. This project adopts a **Drug Repurposing** strategy to find novel mechanisms among safety-proven FDA-approved drugs.

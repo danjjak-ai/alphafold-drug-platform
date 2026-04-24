@@ -1,5 +1,6 @@
 import requests
 import os
+import sys
 import sqlite3
 import numpy as np
 from rdkit import Chem
@@ -114,47 +115,45 @@ if __name__ == "__main__":
     os.makedirs(targets_out_dir, exist_ok=True)
     db_path = os.path.join("data", "mg_discovery.db")
 
-    # ── CHRNA1 ────────────────────────────────────────────
-    print("Preparing CHRNA1 receptor...")
-    chrna1_pdb, chrna1_src = get_best_pdb_path(
-        "chrna1",
-        fallback_rcsb_path="data/structures/targets/7ql6_raw.pdb"
-    )
-    if chrna1_src == "rcsb_pdb" and not os.path.exists(chrna1_pdb):
-        download_pdb("7QL6", chrna1_pdb)
-    chrna1_pdbqt = os.path.join(targets_out_dir, "chrna1.pdbqt")
-    ok = process_target(chrna1_pdb, chrna1_pdbqt, chain_ids=['A', 'D'] if chrna1_src == "rcsb_pdb" else None)
-    if ok:
-        update_structure_source(db_path, "CHRNA1", chrna1_src, chrna1_pdbqt)
+    if not os.path.exists(db_path):
+        print(f"Database not found at {db_path}. Please run fetch_targets.py first.")
+    else:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT gene_name, pdb_id FROM targets")
+        db_targets = cursor.fetchall()
+        conn.close()
 
-    # ── MuSK ─────────────────────────────────────────────
-    print("Preparing MuSK receptor...")
-    musk_pdb, musk_src = get_best_pdb_path(
-        "musk",
-        fallback_rcsb_path="data/structures/targets/8s9p_raw.pdb"
-    )
-    if musk_src == "rcsb_pdb" and not os.path.exists(musk_pdb):
-        download_pdb("8S9P", musk_pdb)
-    musk_pdbqt = os.path.join(targets_out_dir, "musk.pdbqt")
-    ok = process_target(musk_pdb, musk_pdbqt, chain_ids=['C'] if musk_src == "rcsb_pdb" else None)
-    if ok:
-        update_structure_source(db_path, "MUSK", musk_src, musk_pdbqt)
+        for gene_name, pdb_id in db_targets:
+            if not gene_name:
+                continue
+                
+            print(f"\nProcessing target: {gene_name}...")
+            pdb_path, src = get_best_pdb_path(
+                gene_name,
+                fallback_rcsb_path=os.path.join(targets_out_dir, f"{gene_name.lower()}_raw.pdb")
+            )
+            
+            if src == "rcsb_pdb" and not os.path.exists(pdb_path):
+                if pdb_id:
+                    print(f"  Downloading PDB {pdb_id} for {gene_name}...")
+                    download_pdb(pdb_id, pdb_path)
+                else:
+                    print(f"  [Warning] No PDB ID found for {gene_name} and no predicted structure available.")
+                    continue
+            
+            if not os.path.exists(pdb_path):
+                print(f"  [Error] PDB file not found: {pdb_path}")
+                continue
 
-    # ── LRP4 ─────────────────────────────────────────────
-    print("Preparing LRP4 receptor...")
-    lrp4_pdb, lrp4_src = get_best_pdb_path(
-        "lrp4",
-        fallback_rcsb_path="data/structures/targets/8s9p_raw.pdb"
-    )
-    if lrp4_src == "rcsb_pdb" and not os.path.exists(lrp4_pdb):
-        # 8S9P는 MuSK 준비 단계에서 이미 다운로드됨
-        if not os.path.exists(lrp4_pdb):
-            download_pdb("8S9P", lrp4_pdb)
-    lrp4_pdbqt = os.path.join(targets_out_dir, "lrp4.pdbqt")
-    ok = process_target(lrp4_pdb, lrp4_pdbqt, chain_ids=['B'] if lrp4_src == "rcsb_pdb" else None)
-    if ok:
-        update_structure_source(db_path, "LRP4", lrp4_src, lrp4_pdbqt)
+            pdbqt_out = os.path.join(targets_out_dir, f"{gene_name.lower()}.pdbqt")
+            
+            # Use all chains to ensure dynamic compatibility with any new target
+            ok = process_target(pdb_path, pdbqt_out, chain_ids=None)
+            if ok:
+                update_structure_source(db_path, gene_name, src, pdbqt_out)
+                print(f"  Target {gene_name} prepared successfully.")
 
     print("\nTarget preparation complete.")
-    print("TIP: AlphaFold DB 구조를 사용하려면 먼저 아래를 실행하세요:")
-    print("  python scripts/predict_structures.py")
+
+
