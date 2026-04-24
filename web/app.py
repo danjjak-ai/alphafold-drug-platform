@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 import os
+import webbrowser
 import streamlit.components.v1 as components
 
 st.set_page_config(
@@ -804,10 +805,17 @@ def main():
                         print("[app] run_pipeline.bat not found.")
                 else:
                     print(f"[app] Preparing Colab pipeline for {disease}...")
-                    # For Colab, we guide the user to upload the notebook.
+                    
+                    # Construct Colab URL (using GitHub bridge)
+                    colab_url = "https://colab.research.google.com/github/danjjak-ai/alphafold-drug-platform/blob/master/Discovery_Core_Colab_Pipeline.ipynb"
+                    
+                    # Open browser
+                    webbrowser.open(colab_url)
+                    
+                    # Update chat
                     st.session_state.chat_history.append({
                         "role": "assistant", 
-                        "text": f"Colab Pipeline configured for **{disease}**.\n\nPlease open `Discovery_Core_Colab_Pipeline.ipynb` in Google Colab, upload the notebook, and run all cells.\n\nAfter completion, download `discovery_results.zip` and run `import_results.bat` locally."
+                        "text": f"🚀 **Colab Pipeline**이 브라우저에서 실행되었습니다.\n\n**{disease}** 타겟에 맞춰 코드를 실행해 주세요.\n\n1. Colab에서 '모두 실행' (Ctrl+F9)을 누르세요.\n2. 완료 후 다운로드된 `discovery_results.zip`을 프로젝트 폴더에 넣어주세요.\n3. `import_results.bat`를 실행하여 결과를 병합하세요."
                     })
                 st.rerun()
 

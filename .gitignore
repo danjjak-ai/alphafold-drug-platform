@@ -76,6 +76,7 @@ results/top_candidates.csv
 # ─── Jupyter Notebook ────────────────────────────
 .ipynb_checkpoints/
 *.ipynb
+!Discovery_Core_Colab_Pipeline.ipynb
 
 # ─── IDE / Editor / OS ───────────────────────────
 .vscode/

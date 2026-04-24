@@ -817,7 +817,11 @@
                 const disease = el('admin-disease-input') ? el('admin-disease-input').value : 'Myasthenia Gravis';
                 const env = document.querySelector('input[name="exec_env"]:checked').value;
                 Streamlit.setComponentValue({action: 'start_pipeline', disease: disease, env: env, ts: Date.now()});
-                alert(`Pipeline initialized for ${disease} via ${env}. Check backend logs.`);
+                if (env === 'colab') {
+                    alert(`Google Colab 브라우저 창을 엽니다. 파이프라인을 실행해 주세요.`);
+                } else {
+                    alert(`로컬 파이프라인(run_pipeline.bat)을 시작합니다.`);
+                }
             };
             if(el('btn-search-disease')) el('btn-search-disease').onclick = () => {
                 const query = el('admin-disease-input').value;
