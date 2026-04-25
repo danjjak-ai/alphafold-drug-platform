@@ -37,7 +37,7 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #315168; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col overflow-hidden">
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 h-screen flex flex-col overflow-hidden">
 <!-- Top Navigation Bar -->
 <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 px-6 py-3 bg-background-light dark:bg-background-dark z-50">
 <div class="flex items-center gap-8">
@@ -62,6 +62,13 @@
 <a class="text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" id="nav-simulations" href="javascript:showPage('simulations')">Simulations</a>
 <a class="text-slate-600 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" id="nav-admin" href="javascript:showPage('admin')">Admin</a>
 </nav>
+<!-- Disease Selector -->
+<div id="disease-selector-wrapper" class="flex items-center gap-2 px-3 py-1.5 bg-slate-800/60 rounded-lg border border-slate-700 hover:border-primary/40 transition-colors">
+<span class="material-symbols-outlined text-sm text-primary">coronavirus</span>
+<select id="disease-selector" class="bg-transparent text-xs text-slate-200 border-none outline-none focus:ring-0 cursor-pointer max-w-[160px]">
+<option value="">— Select Disease —</option>
+</select>
+</div>
 <div class="flex gap-2">
 <button class="flex items-center justify-center rounded-lg h-10 w-10 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-all">
 <span class="material-symbols-outlined">notifications</span>
@@ -177,54 +184,25 @@
     </div>
 </div>
 
-<main class="flex-1 flex overflow-hidden p-4 gap-4">
+<main class="flex-1 flex overflow-hidden p-3 gap-3" style="min-height:0;">
 <!-- Left Column: Targeting & Screening -->
-<section class="w-1/4 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
-<!-- Target Status Cards -->
-<div class="flex flex-col gap-3">
+<section class="w-1/4 flex flex-col gap-3" style="min-height:0;">
+<!-- Target Status Cards (dynamic) -->
+<div class="flex flex-col gap-2" style="max-height:30vh;min-height:0;">
 <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 px-1">Target Research Status</h3>
-<div class="glass-panel rounded-xl p-4 flex flex-col gap-2">
-<div class="flex justify-between items-start">
-<div>
-<p class="text-sm font-semibold text-slate-100">CHRNA1</p>
-<p class="text-[10px] text-slate-400">AChR alpha subunit</p>
-</div>
-<span id="chrna1-status" class="px-2 py-0.5 rounded text-[10px] bg-green-500/20 text-green-400 font-bold">ACTIVE</span>
-</div>
-<div class="flex items-end justify-between mt-2">
-<div class="text-2xl font-bold text-primary"><span id="chrna1-score-val">94.2</span><span class="text-xs font-normal text-slate-500 ml-1">Score</span></div>
-<div class="text-[10px] text-green-400 flex items-center gap-0.5">
-<span class="material-symbols-outlined text-xs">trending_up</span>+2.1%
-                        </div>
-</div>
-<div class="w-full bg-slate-700/50 h-1.5 rounded-full mt-1">
-<div id="chrna1-progress" class="bg-primary h-full rounded-full" style="width: 94.2%"></div>
-</div>
-</div>
-<div class="glass-panel rounded-xl p-4 flex flex-col gap-2">
-<div class="flex justify-between items-start">
-<div>
-<p class="text-sm font-semibold text-slate-100">MuSK</p>
-<p class="text-[10px] text-slate-400">Muscle-Specific Kinase</p>
-</div>
-<span id="musk-status" class="px-2 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-400 font-bold">SCREENING</span>
-</div>
-<div class="flex items-end justify-between mt-2">
-<div class="text-2xl font-bold text-slate-300"><span id="musk-score-val">68.5</span><span class="text-xs font-normal text-slate-500 ml-1">Score</span></div>
-<div class="text-[10px] text-slate-400">Stable</div>
-</div>
-<div class="w-full bg-slate-700/50 h-1.5 rounded-full mt-1">
-<div id="musk-progress" class="bg-slate-500 h-full rounded-full" style="width: 68.5%"></div>
-</div>
+<div id="target-cards-container" class="flex flex-col gap-1.5 overflow-y-auto custom-scrollbar flex-1" style="min-height:0;">
+  <div class="glass-panel rounded-xl p-3 text-center">
+    <p class="text-[10px] text-slate-500 italic">Select a disease from the header to load targets.</p>
+  </div>
 </div>
 </div>
 <!-- Priority Drug List Table -->
-<div class="glass-panel rounded-xl flex-1 flex flex-col overflow-hidden">
-<div class="p-4 border-b border-slate-700/50 flex justify-between items-center">
+<div class="glass-panel rounded-xl flex flex-col" style="min-height: 0; flex: 1 1 0;">
+<div class="p-3 border-b border-slate-700/50 flex justify-between items-center">
 <h3 class="text-sm font-bold text-slate-100">Priority Candidates</h3>
 <span class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-primary transition-colors">filter_list</span>
 </div>
-<div class="overflow-x-auto custom-scrollbar" style="max-height: 420px; overflow-y: auto;">
+<div class="overflow-y-auto custom-scrollbar flex-1">
 <table class="w-full text-left border-collapse">
 <thead class="sticky top-0 bg-slate-800/80 backdrop-blur-sm z-10">
 <tr class="text-[10px] uppercase tracking-tighter text-slate-400 border-b border-slate-700/50">
@@ -304,9 +282,9 @@
 </div>
 </section>
 <!-- Center Column: 3D Molecular Analysis -->
-<section class="flex-1 flex flex-col gap-4">
+<section class="flex-1 flex flex-col gap-3" style="min-height:0;">
 <!-- 3D Mol Viewer -->
-<div class="glass-panel rounded-xl flex-1 relative overflow-hidden group">
+<div class="glass-panel rounded-xl flex-1 relative overflow-hidden group" style="min-height:0;">
 <div class="absolute top-4 left-4 z-10 flex flex-col gap-2">
 <div class="bg-background-dark/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700">
 <p id="viewer-source-label" class="text-[10px] text-slate-400 uppercase font-bold tracking-tighter text-blue-400 bg-blue-900/30 px-1 py-0.5 rounded inline-block">Current Complex</p>
@@ -358,7 +336,7 @@
 </div>
 </div>
 <!-- RMSD Analysis Chart -->
-<div class="glass-panel rounded-xl h-48 p-4 flex flex-col">
+<div class="glass-panel rounded-xl h-36 p-3 flex flex-col">
 <div class="flex justify-between items-center mb-4">
 <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">RMSD Analysis (Molecular Dynamics)</h3>
 <div class="flex gap-4">
@@ -390,9 +368,9 @@
 </div>
 </section>
 <!-- Right Column: AI Insights & Explanation -->
-<section class="w-1/3 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
+<section class="w-1/3 flex flex-col gap-3" style="min-height:0;">
 <!-- Mechanism Insight (Network Graph Simulation) -->
-<div class="glass-panel rounded-xl flex flex-col h-1/2">
+<div class="glass-panel rounded-xl flex flex-col" style="flex: 2 1 0; min-height:0;">
 <div class="p-4 border-b border-slate-700/50 flex justify-between items-center">
 <div>
 <h3 class="text-sm font-bold text-slate-100">Mechanism Insight</h3>
@@ -422,7 +400,7 @@
 </div>
 </div>
 <!-- Local LLM Explanation (Ollama Interface) -->
-<div class="glass-panel rounded-xl flex-1 flex flex-col bg-slate-900/50">
+<div class="glass-panel rounded-xl flex flex-col bg-slate-900/50" style="flex: 3 1 0; min-height:0;">
 <div class="p-4 border-b border-slate-700/50 flex items-center gap-3">
 <div class="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
 <span class="material-symbols-outlined">smart_toy</span>
@@ -469,6 +447,20 @@
         <div>
             <h2 class="text-2xl font-bold text-slate-100">Admin Panel</h2>
             <p class="text-xs text-slate-500">Pipeline Execution Configuration</p>
+        </div>
+
+        <!-- Registered Diseases -->
+        <div class="glass-panel rounded-2xl p-6 flex flex-col gap-4 border border-slate-700/50">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-slate-300 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-base">biotech</span>
+                    Registered Diseases
+                </h3>
+                <span class="text-[10px] text-slate-500">Click to switch active disease</span>
+            </div>
+            <div id="admin-disease-list" class="flex flex-wrap gap-2 min-h-[36px]">
+                <p class="text-[11px] text-slate-500 italic">No diseases registered yet. Initialize a pipeline below.</p>
+            </div>
         </div>
         <div class="glass-panel rounded-2xl p-6 flex flex-col gap-6 border border-slate-700/50">
             <div class="flex flex-col gap-2">
@@ -556,6 +548,27 @@
         window.parent.postMessage({isStreamlitMessage: true, type: 'streamlit:setFrameHeight', height: document.body.scrollHeight}, '*');
     };
 
+    // ── rebindSimTargetButtons (global, called after dynamic insert) ──
+    window.rebindSimTargetButtons = function() {
+        let selectedTarget = (window._currentTargets || [])[0] || 'UNKNOWN';
+        document.querySelectorAll('.sim-target-btn').forEach(btn => {
+            btn.onclick = () => {
+                selectedTarget = btn.dataset.target;
+                document.querySelectorAll('.sim-target-btn').forEach(b => {
+                    b.className = b.className
+                        .replace('bg-primary/20', '')
+                        .replace('border-primary', 'border-slate-700')
+                        .replace('text-primary', 'text-slate-400')
+                        .replace('font-bold', '');
+                    b.classList.add('text-slate-400', 'border-slate-700');
+                });
+                btn.classList.remove('border-slate-700', 'text-slate-400');
+                btn.classList.add('bg-primary/20', 'border-primary', 'text-primary', 'font-bold');
+                window._selectedSimTarget = selectedTarget;
+            };
+        });
+    };
+
     // ── Professional 2D Binding Pocket Diagram ────────────────────
     window.drawBindingDiagram = function(residues, coeff, chemblId) {
         const svg = document.getElementById('mech-binding-svg');
@@ -631,26 +644,93 @@
                     if(args.library_html && el('library-table-body')) el('library-table-body').innerHTML = args.library_html;
                     if(args.simulations_html && el('simulations-list')) el('simulations-list').innerHTML = args.simulations_html;
                     if(args.ai_html && el('ai-chat-output')) el('ai-chat-output').innerHTML = args.ai_html;
-                    
-                    if(args.chrna1_score) setVal('chrna1-score-val', args.chrna1_score);
-                    if(args.musk_score) setVal('musk-score-val', args.musk_score);
-                    if(args.lrp4_score) setVal('lrp4-score-val', args.lrp4_score);
-                    if(args.chrna1_progress) setPct('chrna1-progress', args.chrna1_progress);
-                    if(args.musk_progress) setPct('musk-progress', args.musk_progress);
-                    if(args.lrp4_progress) setPct('lrp4-progress', args.lrp4_progress);
 
-                    const updateStatus = (id, text) => {
-                        const n = el(id);
-                        if (!n) return;
-                        n.innerText = text;
-                        n.className = "px-2 py-0.5 rounded text-[10px] font-bold ";
-                        if (text === "ACTIVE") n.className += "bg-green-500/20 text-green-400";
-                        else if (text === "SCREENING") n.className += "bg-amber-500/20 text-amber-400";
-                        else n.className += "bg-slate-500/20 text-slate-400";
-                    };
-                    
-                    if(args.chrna1_status) updateStatus('chrna1-status', args.chrna1_status);
-                    if(args.musk_status) updateStatus('musk-status', args.musk_status);
+                    // ── Disease Selector ─────────────────────────────────────
+                    if (args.disease_list !== undefined) {
+                        const sel = el('disease-selector');
+                        if (sel) {
+                            const prev = sel.value;
+                            sel.innerHTML = '<option value="">— Select Disease —</option>';
+                            (args.disease_list || []).forEach(d => {
+                                const opt = document.createElement('option');
+                                opt.value = d.name;
+                                opt.textContent = d.name;
+                                if (d.name === args.active_disease) opt.selected = true;
+                                sel.appendChild(opt);
+                            });
+                            // Admin 페이지 질환 등록 리스트 업데이트
+                            const adminList = el('admin-disease-list');
+                            if (adminList) {
+                                adminList.innerHTML = '';
+                                (args.disease_list || []).forEach(d => {
+                                    const isActive = d.name === args.active_disease;
+                                    adminList.insertAdjacentHTML('beforeend', `
+                                    <button class="px-3 py-1.5 rounded-full text-[11px] font-bold border transition-colors
+                                        ${isActive
+                                            ? 'bg-primary/20 border-primary text-primary'
+                                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-primary/50 hover:text-primary'}"
+                                        onclick="(function(){
+                                            const sel=document.getElementById('disease-selector');
+                                            if(sel){sel.value='${d.name}';sel.dispatchEvent(new Event('change'));}
+                                        })()">
+                                        ${isActive ? '● ' : ''}${d.name}
+                                    </button>`);
+                                });
+                            }
+                        }
+                    }
+
+                    // ── Dynamic Target Cards ─────────────────────────────────
+                    if (args.target_stats && Array.isArray(args.target_stats)) {
+                        const container = el('target-cards-container');
+                        if (container) {
+                            container.innerHTML = '';
+                            if (args.target_stats.length === 0) {
+                                container.innerHTML = '<div class="glass-panel rounded-xl p-4 text-center"><p class="text-[11px] text-slate-500 italic">No targets found for this disease yet. Run the pipeline first.</p></div>';
+                            } else {
+                                args.target_stats.forEach(t => {
+                                    const p = t.progress || 0;
+                                    const statusText = p >= 100 ? 'ACTIVE' : p > 0 ? 'SCREENING' : 'PENDING';
+                                    const statusCls = statusText === 'ACTIVE'
+                                        ? 'bg-green-500/20 text-green-400'
+                                        : statusText === 'SCREENING'
+                                        ? 'bg-amber-500/20 text-amber-400'
+                                        : 'bg-slate-500/20 text-slate-400';
+                                    const barCls = statusText === 'ACTIVE' ? 'bg-primary' : statusText === 'SCREENING' ? 'bg-amber-400' : 'bg-slate-600';
+                                    container.insertAdjacentHTML('beforeend', `
+                                    <div class="glass-panel rounded-lg px-3 py-2 flex flex-col gap-1 hover:border-primary/30 transition-colors">
+                                        <div class="flex justify-between items-center">
+                                            <p class="text-xs font-bold text-slate-100">${t.gene_name}</p>
+                                            <span class="px-1.5 py-0.5 rounded text-[9px] font-bold ${statusCls}">${statusText}</span>
+                                        </div>
+                                        <div class="flex items-center justify-between gap-2">
+                                            <div class="flex-1 bg-slate-700/50 h-1 rounded-full overflow-hidden">
+                                                <div class="${barCls} h-full rounded-full transition-all duration-500" style="width:${Math.min(p,100)}%"></div>
+                                            </div>
+                                            <span class="text-[10px] font-mono text-primary whitespace-nowrap">${(t.score || 0).toFixed(1)} <span class="text-slate-500">/ ${p.toFixed(0)}%</span></span>
+                                        </div>
+                                    </div>`);
+                                });
+
+                            }
+                            // MD 모달 타겟 버튼도 동적 업데이트
+                            const simBtns = el('sim-target-buttons');
+                            if (simBtns) {
+                                simBtns.innerHTML = '';
+                                window._currentTargets = args.target_stats.map(t => t.gene_name);
+                                args.target_stats.forEach((t, i) => {
+                                    const isFirst = i === 0;
+                                    simBtns.insertAdjacentHTML('beforeend', `
+                                    <button data-target="${t.gene_name}"
+                                        class="sim-target-btn flex-1 py-2 rounded-lg border text-xs transition-all
+                                        ${isFirst ? 'bg-primary/20 border-primary text-primary font-bold' : 'border-slate-700 text-slate-400 hover:border-primary/50 hover:text-primary'}">
+                                        ${t.gene_name}
+                                    </button>`);
+                                });
+                                rebindSimTargetButtons();
+                            }
+                        }
+                    }
                     
                     if(args.viewer_complex) setVal('viewer-complex-title', args.viewer_complex);
                     if(args.viewer_source) setVal('viewer-source-label', args.viewer_source);
@@ -814,8 +894,9 @@
             // 1. Dashboard Actions
             if(el('btn-view-all')) el('btn-view-all').onclick = () => Streamlit.setComponentValue({action: 'view_all_candidates', ts: Date.now()});
             if(el('btn-start-pipeline')) el('btn-start-pipeline').onclick = () => {
-                const disease = el('admin-disease-input') ? el('admin-disease-input').value : 'Myasthenia Gravis';
-                const env = document.querySelector('input[name="exec_env"]:checked').value;
+                const disease = el('admin-disease-input') ? el('admin-disease-input').value : '';
+                const env = document.querySelector('input[name="exec_env"]:checked')?.value || 'colab';
+                if (!disease.trim()) { alert('질환명을 입력해 주세요.'); return; }
                 Streamlit.setComponentValue({action: 'start_pipeline', disease: disease, env: env, ts: Date.now()});
                 if (env === 'colab') {
                     alert(`Google Colab 브라우저 창을 엽니다. 파이프라인을 실행해 주세요.`);
@@ -834,6 +915,17 @@
                     Streamlit.setComponentValue({action: 'search_disease_terms', query: query, ts: Date.now()});
                 }
             };
+
+            // Disease Selector (header)
+            if(el('disease-selector')) {
+                el('disease-selector').onchange = (e) => {
+                    Streamlit.setComponentValue({
+                        action: 'select_disease',
+                        disease_name: e.target.value,
+                        ts: Date.now()
+                    });
+                };
+            }
             
             // 2. AI Chat
             if(el('ai-send-btn')) el('ai-send-btn').onclick = () => { 
@@ -1086,8 +1178,8 @@
                         const chemblId   = (document.getElementById('sim-chembl-input')?.value || '').trim();
                         const duration   = parseFloat(document.getElementById('sim-duration-input')?.value) || 10;
                         const forcefield = document.getElementById('sim-ff-select')?.value || 'AMBER';
+                        const target     = window._selectedSimTarget || (window._currentTargets || ['Unknown'])[0];
 
-                        // 유효성 검사
                         if (!chemblId) {
                             if (errArea) errArea.classList.remove('hidden');
                             if (errMsg)  errMsg.innerText = 'ChEMBL ID를 입력해주세요.';
@@ -1095,28 +1187,26 @@
                         }
                         if (errArea) errArea.classList.add('hidden');
 
-                        // UI: 로딩 상태
                         if (progArea) { progArea.classList.remove('hidden'); progArea.classList.add('flex'); }
                         submitBtn.disabled = true;
                         submitBtn.classList.add('opacity-50');
 
-                        // Streamlit에 액션 전송
                         Streamlit.setComponentValue({
                             action:      'run_md_simulation',
-                            target:      selectedTarget,
+                            target:      target,
                             chembl_id:   chemblId,
                             duration_ns: duration,
                             forcefield:  forcefield,
                             ts:          Date.now()
                         });
 
-                        // 2초 후 모달 닫고 MD 탭으로 이동
                         setTimeout(() => {
                             closeModal();
                             showPage('dynamics');
                         }, 2000);
                     };
                 }
+
             })();
         });
     })();
@@ -1150,10 +1240,9 @@
         <span class="material-symbols-outlined text-xs text-slate-500">hub</span>
         Target Protein
       </label>
-      <div class="flex gap-2">
-        <button data-target="CHRNA1" class="sim-target-btn flex-1 py-2 rounded-lg border text-xs transition-all bg-primary/20 border-primary text-primary font-bold">CHRNA1</button>
-        <button data-target="MUSK"   class="sim-target-btn flex-1 py-2 rounded-lg border border-slate-700 text-xs text-slate-400 hover:border-primary/50 hover:text-primary transition-all">MuSK</button>
-        <button data-target="LRP4"   class="sim-target-btn flex-1 py-2 rounded-lg border border-slate-700 text-xs text-slate-400 hover:border-primary/50 hover:text-primary transition-all">LRP4</button>
+      <div id="sim-target-buttons" class="flex gap-2 flex-wrap">
+        <!-- Dynamically populated from target_stats -->
+        <p class="text-[10px] text-slate-500 italic">Select a disease first to load targets.</p>
       </div>
     </div>
 

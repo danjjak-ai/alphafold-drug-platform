@@ -3,7 +3,17 @@ import pandas as pd
 import sqlite3
 import os
 import webbrowser
+import subprocess
 import streamlit.components.v1 as components
+
+# Add project root to sys.path to allow importing from scripts folder
+import sys
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if project_root not in sys.path:
+    sys.path.append(project_root)
+
+# Import database initialization
+from scripts.init_db import init_db
 
 st.set_page_config(
     page_title="Discovery Core",
@@ -33,100 +43,148 @@ st.markdown("""
 # Declare component using local folder
 st_dashboard = components.declare_component("mg_dashboard", path="web/frontend")
 
-def load_data(limit=10):
-    # Use absolute paths for Cloud Run consistency
+def get_db_path():
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    db_path = os.path.join(base_dir, "data", "mg_discovery.db")
-    
-    print(f"[app] LOADING DATA FROM: {db_path}")
-    print(f"CWD: {os.getcwd()}")
-    if os.path.exists(os.path.join(base_dir, "data")):
-        print(f"FILES IN DATA/: {os.listdir(os.path.join(base_dir, 'data'))}")
-    else:
-        print("ERROR: DATA FOLDER NOT FOUND")
+    return os.path.join(base_dir, "data", "mg_discovery.db")
+
+
+def get_disease_list():
+    """DB에 등록된 모든 질환 목록 반환."""
+    db_path = get_db_path()
+    if not os.path.exists(db_path):
+        return []
+    try:
+        conn = sqlite3.connect(db_path)
+        rows = conn.execute(
+            "SELECT id, name FROM diseases ORDER BY name"
+        ).fetchall()
+        conn.close()
+        return [{"id": r[0], "name": r[1]} for r in rows]
+    except Exception:
+        return []
+
+
+def get_disease_id(conn, disease_name):
+    """disease_name 으로 disease_id 조회 (없으면 None)."""
+    if not disease_name:
+        return None
+    row = conn.execute(
+        "SELECT id FROM diseases WHERE name = ?", (disease_name,)
+    ).fetchone()
+    return row[0] if row else None
+
+
+def load_data(disease_name=None, limit=10):
+    """선택 질환 기준으로 최우선 후보와 타겟 통계를 반환한다."""
+    db_path = get_db_path()
+    print(f"[app] LOADING DATA disease='{disease_name}' FROM: {db_path}")
 
     if not os.path.exists(db_path):
         print(f"ERROR: DB FILE NOT FOUND AT {db_path}")
-        return pd.DataFrame(), {}
-    
+        return pd.DataFrame(), []
+
     conn = sqlite3.connect(db_path)
-    
-    # 1. Main Table (Best candidates)
-    query = """
-    SELECT 
-        c.chembl_id, 
-        c.name as compound_name,
-        MIN(d.vina_score) as best_affinity
-    FROM compounds c
-    JOIN docking_results d ON c.id = d.compound_id
-    GROUP BY c.chembl_id, c.name
-    ORDER BY best_affinity ASC
-    LIMIT 10
-    """
+    disease_id = get_disease_id(conn, disease_name)
+
+    # ── 1. 후보 테이블 ───────────────────────────────────────────
+    if disease_id:
+        q_cand = """
+        SELECT c.chembl_id, c.name as compound_name, MIN(d.vina_score) as best_affinity
+        FROM compounds c
+        JOIN docking_results d ON c.id = d.compound_id
+        WHERE c.disease_id = ?
+        GROUP BY c.chembl_id, c.name
+        ORDER BY best_affinity ASC LIMIT ?
+        """
+        params_cand = (disease_id, limit)
+    else:
+        q_cand = """
+        SELECT c.chembl_id, c.name as compound_name, MIN(d.vina_score) as best_affinity
+        FROM compounds c
+        JOIN docking_results d ON c.id = d.compound_id
+        GROUP BY c.chembl_id, c.name
+        ORDER BY best_affinity ASC LIMIT ?
+        """
+        params_cand = (limit,)
+
     try:
-        results_df = pd.read_sql_query(query, conn)
+        results_df = pd.read_sql_query(q_cand, conn, params=params_cand)
         print(f"SUCCESS: Loaded {len(results_df)} candidates.")
     except Exception as e:
-        print(f"SQL ERROR: {e}")
+        print(f"SQL ERROR (candidates): {e}")
         results_df = pd.DataFrame()
-        
-    # 2. Target Stats
-    stats = {}
-    for target in ["CHRNA1", "MUSK", "LRP4"]:
-        q = f"""
-        SELECT 
-            MIN(d.vina_score),
-            COUNT(d.id)
-        FROM targets t
-        JOIN docking_results d ON t.id = d.target_id
-        WHERE t.gene_name = '{target}'
-        """
-        try:
-            cur = conn.cursor()
-            cur.execute(q)
-            min_score, count = cur.fetchone()
-            display_score = round(abs(min_score) * 8.5, 1) if min_score else 0.0
-            progress = round((count / 2017) * 100, 1) if count else 0.0
-            stats[target.lower()] = {"score": str(display_score), "progress": str(progress)}
-        except:
-            stats[target.lower()] = {"score": "0.0", "progress": "0"}
-            
-    conn.close()
-    return results_df, stats
 
-def get_library_data(query=None):
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    db_path = os.path.join(base_dir, "data", "mg_discovery.db")
+    # ── 2. 타겟 통계 (동적) ──────────────────────────────────────
+    if disease_id:
+        target_rows = conn.execute(
+            "SELECT id, gene_name FROM targets WHERE disease_id = ?", (disease_id,)
+        ).fetchall()
+    else:
+        target_rows = conn.execute(
+            "SELECT id, gene_name FROM targets"
+        ).fetchall()
+
+    total_compounds = max(
+        conn.execute(
+            "SELECT COUNT(*) FROM compounds WHERE disease_id = ?" if disease_id
+            else "SELECT COUNT(*) FROM compounds",
+            (disease_id,) if disease_id else ()
+        ).fetchone()[0],
+        1
+    )
+
+    target_stats = []
+    for tid, gene in target_rows:
+        try:
+            min_score, count = conn.execute(
+                "SELECT MIN(d.vina_score), COUNT(d.id) FROM docking_results d WHERE d.target_id = ?",
+                (tid,)
+            ).fetchone()
+            display_score = round(abs(min_score) * 8.5, 1) if min_score else 0.0
+            progress = round((count / total_compounds) * 100, 1) if count else 0.0
+        except Exception:
+            display_score, progress = 0.0, 0.0
+        target_stats.append({
+            "gene_name": gene or "Unknown",
+            "score": display_score,
+            "progress": progress,
+        })
+
+    conn.close()
+    return results_df, target_stats
+
+def get_library_data(search_query=None, disease_name=None):
+    """선택 질환 기준으로 화합물 라이브러리를 반환한다."""
+    db_path = get_db_path()
     if not os.path.exists(db_path):
         return pd.DataFrame()
-    
-    conn = sqlite3.connect(db_path)
-    
-    where_clause = ""
-    params = []
-    if query:
-        where_clause = "WHERE c.chembl_id LIKE ? OR c.name LIKE ?"
-        params = [f"%{query}%", f"%{query}%"]
 
+    conn = sqlite3.connect(db_path)
+    disease_id = get_disease_id(conn, disease_name)
+
+    conditions, params = [], []
+    if disease_id:
+        conditions.append("c.disease_id = ?")
+        params.append(disease_id)
+    if search_query:
+        conditions.append("(c.chembl_id LIKE ? OR c.name LIKE ?)")
+        params.extend([f"%{search_query}%", f"%{search_query}%"])
+
+    where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
     query_str = f"""
-    SELECT 
-        c.chembl_id, 
-        c.name, 
-        c.mw, 
-        c.logp, 
-        c.tpsa, 
-        c.max_phase,
-        MIN(d.vina_score) as best_score
+    SELECT c.chembl_id, c.name, c.mw, c.logp, c.tpsa, c.max_phase,
+           MIN(d.vina_score) as best_score
     FROM compounds c
     LEFT JOIN docking_results d ON c.id = d.compound_id
-    {where_clause}
+    {where}
     GROUP BY c.chembl_id
     ORDER BY best_score ASC
     LIMIT 100
     """
     try:
         library_df = pd.read_sql_query(query_str, conn, params=params)
-    except:
+    except Exception as e:
+        print(f"SQL ERROR (library): {e}")
         library_df = pd.DataFrame()
     conn.close()
     return library_df
@@ -207,23 +265,33 @@ def ensure_md_table():
     conn.commit()
     conn.close()
 
-def get_md_history():
-    """최근 MD 시뮬레이션 목록 반환."""
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    db_path = os.path.join(base_dir, "data", "mg_discovery.db")
+def get_md_history(disease_name=None):
+    """최근 MD 시뮬레이션 목록 반환 (질환 필터 적용)."""
+    db_path = get_db_path()
     if not os.path.exists(db_path):
         return []
     ensure_md_table()
     conn = sqlite3.connect(db_path)
+    disease_id = get_disease_id(conn, disease_name)
     try:
-        rows = conn.execute("""
-            SELECT sim_id, target, chembl_id, mean_rmsd, duration_ns, num_frames,
-                   pdbqt_path, created_at
-            FROM molecular_dynamics
-            ORDER BY id DESC
-            LIMIT 20
-        """).fetchall()
-    except:
+        if disease_id:
+            rows = conn.execute("""
+                SELECT md.sim_id, md.target, md.chembl_id, md.mean_rmsd,
+                       md.duration_ns, md.num_frames, md.pdbqt_path, md.created_at
+                FROM molecular_dynamics md
+                JOIN targets t ON LOWER(md.target) = LOWER(t.gene_name)
+                WHERE t.disease_id = ?
+                ORDER BY md.id DESC LIMIT 20
+            """, (disease_id,)).fetchall()
+        else:
+            rows = conn.execute("""
+                SELECT sim_id, target, chembl_id, mean_rmsd, duration_ns, num_frames,
+                       pdbqt_path, created_at
+                FROM molecular_dynamics
+                ORDER BY id DESC LIMIT 20
+            """).fetchall()
+    except Exception as e:
+        print(f"[md_history] error: {e}")
         rows = []
     conn.close()
     return [
@@ -234,6 +302,7 @@ def get_md_history():
         }
         for r in rows
     ]
+
 
 def get_md_metrics(sim_id):
     """특정 시뮬레이션의 RMSD 시계열 데이터와 PDBQT 경로 반환."""
@@ -462,6 +531,18 @@ def get_insight_data(chembl_id, vina_score=None):
     """Generate candidate-specific mechanism insight and RMSD curves."""
     import hashlib, math, random
     
+    if not chembl_id:
+        return {
+            "mechanism_inference": "Select a candidate to view mechanism insight.",
+            "mechanism_coeff": 0.0,
+            "mechanism_subtitle": "Awaiting Selection",
+            "mechanism_graph_pattern": "flat",
+            "rmsd_backbone_path": [],
+            "rmsd_ligand_path": [],
+            "binding_residues": [],
+            "chembl_id": ""
+        }
+    
     # Use chembl_id as seed for deterministic pseudo-random data
     seed = int(hashlib.md5(chembl_id.encode()).hexdigest()[:8], 16)
     rng = random.Random(seed)
@@ -637,15 +718,26 @@ def generate_simulations_html(sims):
     return html
 
 def main():
+    # Ensure database is initialized with current schema
+    db_path = get_db_path()
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    init_db(db_path)
+
     if "candidates_limit" not in st.session_state:
         st.session_state.candidates_limit = 4
     if "selected_id" not in st.session_state:
-        st.session_state.selected_id = "CHEMBL21333" # Default
+        st.session_state.selected_id = None
     if "chat_history" not in st.session_state:
-        st.session_state.chat_history = [{"role": "assistant", "text": "Platform initialized. Select a candidate to view 3D analysis."}]
+        st.session_state.chat_history = [{"role": "assistant", "text": "Platform initialized. Select a disease from the Admin panel, then pick a candidate."}]
     if "library_query" not in st.session_state:
         st.session_state.library_query = None
-        
+    if "active_disease" not in st.session_state:
+        st.session_state.active_disease = None
+    if "disease_list" not in st.session_state:
+        st.session_state.disease_list = get_disease_list()
+    if "selected_md_sim" not in st.session_state:
+        st.session_state.selected_md_sim = None
+
     # Render Chat HTML
     chat_html = ""
     for msg in st.session_state.chat_history:
@@ -654,64 +746,58 @@ def main():
         else:
             chat_html += f'<div class="flex gap-3"><div class="flex-shrink-0 w-6 h-6 rounded-md bg-primary/20 flex flex-col items-center justify-center border border-primary/30 mt-1"><span class="material-symbols-outlined text-[10px] text-primary">psychiatry</span></div><div class="flex-1 bg-background-dark border border-slate-700/50 rounded-2xl rounded-tl-sm px-4 py-3"><p class="text-[11px] leading-relaxed text-slate-300 font-medium">{msg["text"]}</p></div></div>'
 
-    # Fetch Data
-    df, stats = load_data(limit=st.session_state.candidates_limit)
-    
-    # If starting fresh, set default selected_id to first row
-    if st.session_state.selected_id == "CHEMBL21333" and not df.empty:
+    # ── Fetch Data (disease-aware) ──────────────────────────────────
+    active_disease = st.session_state.active_disease
+    df, target_stats = load_data(
+        disease_name=active_disease,
+        limit=st.session_state.candidates_limit
+    )
+
+    # 기본 선택 후보 설정
+    if st.session_state.selected_id is None and not df.empty:
         st.session_state.selected_id = df.iloc[0]['chembl_id']
 
     table_content = generate_table_html(df, selected_id=st.session_state.selected_id)
 
-    # Fetch 3D Data
-    target_name, protein_pdb, ligand_pdbqt, num_poses, target_source_label = get_docking_data(st.session_state.selected_id)
-
-
-    # Get selected row's vina score for insight
+    # 3D / Insight 데이터
+    target_name, protein_pdb, ligand_pdbqt, num_poses, target_source_label = get_docking_data(
+        st.session_state.selected_id
+    )
     selected_score = None
-    if not df.empty:
+    if not df.empty and st.session_state.selected_id:
         sel_rows = df[df['chembl_id'] == st.session_state.selected_id]
         if not sel_rows.empty:
             selected_score = sel_rows.iloc[0]['best_affinity']
+    
+    # Only get insight if we have a selected candidate
+    if st.session_state.selected_id:
+        insight_data = get_insight_data(st.session_state.selected_id, vina_score=selected_score)
+    else:
+        insight_data = get_insight_data(None)
 
-    # Fetch Insight and RMSD Data
-    insight_data = get_insight_data(st.session_state.selected_id, vina_score=selected_score)
-
-    # MD 데이터 조회
-    if "selected_md_sim" not in st.session_state:
-        st.session_state.selected_md_sim = None
-    md_history = get_md_history()
+    # MD 데이터
+    md_history = get_md_history(disease_name=active_disease)
     if md_history and st.session_state.selected_md_sim is None:
         st.session_state.selected_md_sim = md_history[0]["sim_id"]
     md_metrics = get_md_metrics(st.session_state.selected_md_sim) if st.session_state.selected_md_sim else {}
 
-    def get_status_text(progress_str):
-        try:
-            p = float(progress_str)
-            if p <= 0: return "PENDING"
-            elif p >= 100: return "ACTIVE"
-            else: return "SCREENING"
-        except: return "PENDING"
-
-    chrna1_status = get_status_text(stats.get('chrna1', {}).get('progress', '0'))
-    musk_status = get_status_text(stats.get('musk', {}).get('progress', '0'))
-    lrp4_status = get_status_text(stats.get('lrp4', {}).get('progress', '0'))
+    # Library / Simulations
+    library_html_content = generate_library_html(
+        get_library_data(st.session_state.library_query, disease_name=active_disease)
+    )
+    simulations_html_content = generate_simulations_html(get_simulations_data())
 
     # Component Output
     comp_value = st_dashboard(
-        table_html=table_content, 
+        table_html=table_content,
         ai_html=chat_html,
-        chrna1_score=stats.get('chrna1', {}).get('score', '0.0'),
-        chrna1_progress=stats.get('chrna1', {}).get('progress', '0'),
-        chrna1_status=chrna1_status,
-        musk_score=stats.get('musk', {}).get('score', '0.0'),
-        musk_progress=stats.get('musk', {}).get('progress', '0'),
-        musk_status=musk_status,
-        lrp4_score=stats.get('lrp4', {}).get('score', '0.0'),
-        lrp4_progress=stats.get('lrp4', {}).get('progress', '0'),
-        lrp4_status=lrp4_status,
+        # ── Disease context (new) ──
+        active_disease=active_disease or "",
+        disease_list=st.session_state.disease_list,
+        target_stats=target_stats,
+        # ── 3D / Insight ──
         viewer_complex=f"{target_name} : {st.session_state.selected_id} Binding" if target_name else f"Analysis : {st.session_state.selected_id}",
-        viewer_source=f"[구조 출처] {target_source_label}",
+        viewer_source=f"[Source] {target_source_label}",
         viewer_ligand=f"Ligand {st.session_state.selected_id}",
         protein_pdb=protein_pdb,
         ligand_pdbqt=ligand_pdbqt,
@@ -724,8 +810,8 @@ def main():
         rmsd_ligand_path=insight_data["rmsd_ligand_path"],
         binding_residues=insight_data["binding_residues"],
         chembl_id=insight_data["chembl_id"],
-        library_html=generate_library_html(get_library_data(st.session_state.library_query)),
-        simulations_html=generate_simulations_html(get_simulations_data()),
+        library_html=library_html_content,
+        simulations_html=simulations_html_content,
         md_history=md_history,
         md_metrics=md_metrics,
         disease_term_candidates=st.session_state.get('disease_term_candidates', []),
@@ -742,6 +828,15 @@ def main():
             if action == "select_candidate":
                 st.session_state.selected_id = comp_value.get("id")
                 st.rerun()
+            elif action == "select_disease":
+                disease_name = comp_value.get("disease_name", "")
+                st.session_state.active_disease = disease_name if disease_name else None
+                # 질환 변경 시 후보 선택 초기화
+                st.session_state.selected_id = None
+                st.session_state.selected_md_sim = None
+                st.session_state.candidates_limit = 4
+                print(f"[app] Active disease switched to: {disease_name}")
+                st.rerun()
             elif action == "view_all_candidates":
                 st.session_state.candidates_limit += 10
                 st.rerun()
@@ -754,7 +849,6 @@ def main():
                 if st.session_state.selected_id:
                     cand_id = st.session_state.selected_id
                     try:
-                        import sqlite3, os
                         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
                         db_path = os.path.join(base_dir, "data", "mg_discovery.db")
                         conn = sqlite3.connect(db_path)
@@ -792,31 +886,27 @@ def main():
             elif action == "start_pipeline":
                 disease = comp_value.get("disease", "Myasthenia Gravis")
                 env = comp_value.get("env", "colab")
-                import subprocess, os
                 
                 if env == "local":
                     print(f"[app] Starting local pipeline for {disease}...")
                     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
                     bat_path = os.path.join(base_dir, "run_pipeline.bat")
                     if os.path.exists(bat_path):
-                        # Run via subprocess (non-blocking for UI)
                         subprocess.Popen(f'start cmd /k "{bat_path}"', cwd=base_dir, shell=True)
                     else:
                         print("[app] run_pipeline.bat not found.")
                 else:
                     print(f"[app] Preparing Colab pipeline for {disease}...")
-                    
-                    # Construct Colab URL (using GitHub bridge)
                     colab_url = "https://colab.research.google.com/github/danjjak-ai/alphafold-drug-platform/blob/master/Discovery_Core_Colab_Pipeline.ipynb"
-                    
-                    # Open browser
                     webbrowser.open(colab_url)
-                    
-                    # Update chat
                     st.session_state.chat_history.append({
-                        "role": "assistant", 
-                        "text": f"🚀 **Colab Pipeline**이 브라우저에서 실행되었습니다.\n\n**{disease}** 타겟에 맞춰 코드를 실행해 주세요.\n\n1. Colab에서 '모두 실행' (Ctrl+F9)을 누르세요.\n2. 완료 후 다운로드된 `discovery_results.zip`을 프로젝트 폴더에 넣어주세요.\n3. `import_results.bat`를 실행하여 결과를 병합하세요."
+                        "role": "assistant",
+                        "text": f"🚀 **Colab Pipeline**이 브라우저에서 실행되었습니다.\n\n**{disease}** 타겟에 맞춰 코드를 실행해 주세요.\n\n1. Colab에서 '모두 실행' (Ctrl+F9)을 누르세요.\n2. 완료 후 `discovery_results.zip`을 프로젝트 폴더에 넣어주세요.\n3. `import_results.bat`를 실행하여 결과를 병합하세요."
                     })
+                # 파이프라인 시작 후 disease_list 갱신 및 활성 질환 설정
+                st.session_state.disease_list = get_disease_list()
+                st.session_state.active_disease = disease
+                st.session_state.selected_id = None
                 st.rerun()
 
             elif action == "search_disease_terms":

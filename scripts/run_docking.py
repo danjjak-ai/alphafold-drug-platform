@@ -80,25 +80,45 @@ def run_single_docking(args):
         pass
     return False
 
-def run_docking_batch(db_path, vina_exe):
+def run_docking_batch(db_path, vina_exe, disease_name=None):
     results_dir = os.path.join("results", "docking")
     os.makedirs(results_dir, exist_ok=True)
     
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
-    cursor.execute("SELECT id, gene_name, structure_path FROM targets")
+    disease_id = None
+    if disease_name:
+        row = cursor.execute("SELECT id FROM diseases WHERE name = ?", (disease_name,)).fetchone()
+        if row:
+            disease_id = row[0]
+            print(f"[INFO] Filtering by disease: {disease_name} (id={disease_id})")
+        else:
+            print(f"[WARN] Disease '{disease_name}' not found. Processing all records.")
+
+    # Get targets (filter by disease if possible)
+    if disease_id:
+        cursor.execute("SELECT id, gene_name, structure_path FROM targets WHERE disease_id = ?", (disease_id,))
+    else:
+        cursor.execute("SELECT id, gene_name, structure_path FROM targets")
     targets = cursor.fetchall()
     
-    cursor.execute("SELECT id, chembl_id FROM compounds")
+    # Get compounds (filter by disease if possible)
+    if disease_id:
+        cursor.execute("SELECT id, chembl_id FROM compounds WHERE disease_id = ?", (disease_id,))
+    else:
+        cursor.execute("SELECT id, chembl_id FROM compounds")
     compounds = cursor.fetchall()
     conn.close()
     
+    if not targets or not compounds:
+        print("[WARN] No targets or compounds found for processing.")
+        return
+
     # Pre-calculate centers
     target_info = []
     for tg_id, gene_name, structure_path in targets:
         path = structure_path
-        # Fallback to default naming convention if path not in DB
         if not path or not os.path.exists(path):
             if gene_name:
                 path = os.path.join("data", "structures", "targets", f"{gene_name.lower()}.pdbqt")
@@ -107,21 +127,31 @@ def run_docking_batch(db_path, vina_exe):
             center = get_receptor_center(path)
             target_info.append((tg_id, path, center))
 
-    
     # Task list (Target x Compound)
     tasks = []
     for tg_id, tg_path, center in target_info:
         for cp_id, chembl_id in compounds:
             lig_path = os.path.join("data", "structures", "ligands", f"{chembl_id}.pdbqt")
             if os.path.exists(lig_path):
-                # Using size 40x40x40 for blind-ish site docking
                 tasks.append((vina_exe, tg_path, lig_path, results_dir, center, (40, 40, 40), cp_id, tg_id, db_path))
     
-    print(f"Starting {len(tasks)} docking tasks with 4 parallel workers (2 CPUs each)...")
-    # Parallel execution
+    if not tasks:
+        print("[WARN] No docking tasks generated (check if .pdbqt files exist in data/structures/)")
+        return
+
+    print(f"Starting {len(tasks)} docking tasks for {disease_name if disease_name else 'all diseases'}...")
     with Pool(4) as p:
         list(tqdm(p.imap(run_single_docking, tasks), total=len(tasks)))
 
 if __name__ == "__main__":
+    import sys
     db_file = os.path.join("data", "mg_discovery.db")
-    run_docking_batch(db_file, "scripts/vina.exe")
+    disease = sys.argv[1] if len(sys.argv) > 1 else None
+    
+    # Vina path handle
+    v_path = "scripts/vina.exe"
+    if not os.path.exists(v_path):
+        v_path = "vina" # assume in PATH (for colab/linux)
+        
+    run_docking_batch(db_file, v_path, disease)
+
