@@ -74,10 +74,10 @@ def get_disease_id(conn, disease_name):
     return row[0] if row else None
 
 
-def load_data(disease_name=None, limit=10):
+def load_data(disease_name=None, limit=10, target_name=None):
     """선택 질환 기준으로 최우선 후보와 타겟 통계를 반환한다."""
     db_path = get_db_path()
-    print(f"[app] LOADING DATA disease='{disease_name}' FROM: {db_path}")
+    print(f"[app] LOADING DATA disease='{disease_name}', target='{target_name}' FROM: {db_path}")
 
     if not os.path.exists(db_path):
         print(f"ERROR: DB FILE NOT FOUND AT {db_path}")
@@ -87,7 +87,21 @@ def load_data(disease_name=None, limit=10):
     disease_id = get_disease_id(conn, disease_name)
 
     # ── 1. 후보 테이블 ───────────────────────────────────────────
-    if disease_id:
+    if target_name:
+        q_cand = """
+        SELECT c.chembl_id, c.name as compound_name, MIN(d.vina_score) as best_affinity
+        FROM compounds c
+        JOIN docking_results d ON c.id = d.compound_id
+        JOIN targets t ON d.target_id = t.id
+        WHERE t.gene_name = ?
+        """
+        params_cand = [target_name]
+        if disease_id:
+            q_cand += " AND c.disease_id = ?"
+            params_cand.append(disease_id)
+        q_cand += " GROUP BY c.chembl_id, c.name ORDER BY best_affinity ASC LIMIT ?"
+        params_cand.append(limit)
+    elif disease_id:
         q_cand = """
         SELECT c.chembl_id, c.name as compound_name, MIN(d.vina_score) as best_affinity
         FROM compounds c
@@ -96,7 +110,7 @@ def load_data(disease_name=None, limit=10):
         GROUP BY c.chembl_id, c.name
         ORDER BY best_affinity ASC LIMIT ?
         """
-        params_cand = (disease_id, limit)
+        params_cand = [disease_id, limit]
     else:
         q_cand = """
         SELECT c.chembl_id, c.name as compound_name, MIN(d.vina_score) as best_affinity
@@ -105,7 +119,7 @@ def load_data(disease_name=None, limit=10):
         GROUP BY c.chembl_id, c.name
         ORDER BY best_affinity ASC LIMIT ?
         """
-        params_cand = (limit,)
+        params_cand = [limit]
 
     try:
         results_df = pd.read_sql_query(q_cand, conn, params=params_cand)
@@ -448,78 +462,113 @@ def detect_coordinate_frame(pdbqt_content):
             except: continue
     return "alphafold"
 
-def get_docking_data(chembl_id):
+def get_docking_data(chembl_id, disease_name=None, target_name=None):
     import glob
     # Use absolute paths for Cloud Run consistency
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    
-    # Priority search for ligand pdbqt
-    search_patterns = [
-        os.path.join(base_dir, "results", "docking", f"*_{chembl_id}_out.pdbqt"),
-        os.path.join(base_dir, "web", "demo_assets", "results", "docking", f"*_{chembl_id}_out.pdbqt"),
-    ]
+    db_path = os.path.join(base_dir, "data", "mg_discovery.db")
     
     file_path = None
-    for p in search_patterns:
-        files = glob.glob(p)
-        if files:
-            file_path = files[0]
-            break
+    target_part = ""
+    
+    # 1. Look up the exact pose path from DB for the specific disease
+    if os.path.exists(db_path):
+        import sqlite3
+        conn = sqlite3.connect(db_path)
+        
+        query = """
+        SELECT d.pose_path, t.gene_name 
+        FROM docking_results d
+        JOIN compounds c ON d.compound_id = c.id
+        JOIN targets t ON d.target_id = t.id
+        WHERE c.chembl_id = ?
+        """
+        params = [chembl_id]
+        
+        if disease_name:
+            query += " AND c.disease_id = (SELECT id FROM diseases WHERE name = ?)"
+            params.append(disease_name)
+            
+        if target_name:
+            query += " AND t.gene_name = ?"
+            params.append(target_name)
+            
+        query += " ORDER BY d.vina_score ASC LIMIT 1"
+        
+        try:
+            row = conn.execute(query, params).fetchone()
+            if row and row[0]:
+                potential_path = os.path.join(base_dir, row[0])
+                if os.path.exists(potential_path):
+                    file_path = potential_path
+                    target_part = row[1].lower()
+        except Exception as e:
+            print(f"[app] DB query error in get_docking_data: {e}")
+        finally:
+            conn.close()
+
+    # 2. Fallback to glob if DB lookup fails
+    if not file_path:
+        # Prioritize files starting with the selected target name
+        target_prefix = target_name.lower() if target_name else "*"
+        search_patterns = [
+            os.path.join(base_dir, "results", "docking", f"{target_prefix}_{chembl_id}_out.pdbqt"),
+            os.path.join(base_dir, "web", "demo_assets", "results", "docking", f"{target_prefix}_{chembl_id}_out.pdbqt"),
+            # Broad fallback if target-specific glob fails
+            os.path.join(base_dir, "results", "docking", f"*_{chembl_id}_out.pdbqt"),
+            os.path.join(base_dir, "web", "demo_assets", "results", "docking", f"*_{chembl_id}_out.pdbqt"),
+        ]
+        
+        for p in search_patterns:
+            files = glob.glob(p)
+            if files:
+                file_path = files[0]
+                target_part = os.path.basename(file_path).split('_')[0].lower()
+                break
         
     if not file_path:
-        print(f"[app] PDBQT NOT FOUND for {chembl_id} in {search_patterns}")
-        return None, None, None, 0, "RCSB PDB"
-    
-    target_part = os.path.basename(file_path).split('_')[0].lower()
+        print(f"[app] PDBQT NOT FOUND for {chembl_id}")
+        return None, None, None, 0, "Structure not found"
     
     with open(file_path, "r") as f:
         pdbqt = f.read()
     
     num_poses = pdbqt.count("MODEL")
     
-    # 리간드 좌표계 감지 (Strategy A)
-    ligand_frame = detect_coordinate_frame(pdbqt)
-    target_source_label = f"Auto-aligned ({ligand_frame.upper()})"
+    # Remove unreliable coordinate frame detection and hardcoded fallbacks
+    # Simply load the corresponding receptor structure dynamically based on target_part
     protein_pdb = ""
-
-    # 1. RCSB 좌표계인 경우 RCSB PDB 우선 로드
-    if ligand_frame == "rcsb":
-        protein_filename = "7ql6_raw.pdb" if "chrna1" in target_part else "8s9p_raw.pdb"
-        rcsb_path = os.path.join(base_dir, "data", "structures", "targets", protein_filename)
-        if os.path.exists(rcsb_path):
-            with open(rcsb_path, "r") as f:
-                protein_pdb = f.read()
-            target_source_label = "RCSB PDB (Aligned)"
-
-    # 2. AlphaFold 좌표계이거나 RCSB 로드 실패 시 DB 조회
+    target_source_label = "Auto-detected Structure"
+    
+    # 1. Try to get structure path from DB
+    db_path = os.path.join(base_dir, "data", "mg_discovery.db")
+    if os.path.exists(db_path):
+        import sqlite3
+        conn = sqlite3.connect(db_path)
+        cur = conn.cursor()
+        try:
+            # Query the targets table for structure_path or structure_source
+            row = cur.execute("SELECT structure_path, structure_source FROM targets WHERE LOWER(gene_name) = ?", (target_part.lower(),)).fetchone()
+            if row and row[0] and os.path.exists(os.path.join(base_dir, row[0])):
+                with open(os.path.join(base_dir, row[0]), "r") as f:
+                    protein_pdb = f.read()
+                target_source_label = row[1] if row[1] else "Database PDBQT"
+        except Exception as e:
+            print(f"[app] Error querying structure: {e}")
+        finally:
+            conn.close()
+            
+    # 2. Fallback: try to construct path dynamically
     if not protein_pdb:
-        db_path = os.path.join(base_dir, "data", "mg_discovery.db")
-        if os.path.exists(db_path):
-            import sqlite3
-            conn = sqlite3.connect(db_path)
-            cur = conn.cursor()
-            try:
-                row = cur.execute("SELECT structure_source, predicted_plddt, predicted_pdb_path FROM targets WHERE LOWER(gene_name) = ?", (target_part.lower(),)).fetchone()
-                if row:
-                    src, plddt, af_path = row
-                    # 리간드가 AlphaFold 프레임이면 AlphaFold PDB 로드
-                    if ligand_frame == "alphafold" and af_path and os.path.exists(os.path.join(base_dir, af_path)):
-                        target_source_label = f"AlphaFold DB (pLDDT: {plddt})"
-                        with open(os.path.join(base_dir, af_path), "r") as f:
-                            protein_pdb = f.read()
-            except: pass
-            finally: conn.close()
-
-    # 3. 최종 폴백 (가장 유사한 타겟 구조)
-    if not protein_pdb:
-        protein_filename = "7ql6_raw.pdb" if "chrna1" in target_part else "8s9p_raw.pdb"
         fallback_paths = [
-            os.path.join(base_dir, "data", "structures", "targets", protein_filename),
-            os.path.join(base_dir, "web", "demo_assets", "data", "structures", "targets", protein_filename)
+            os.path.join(base_dir, "data", "structures", "targets", f"{target_part.lower()}_raw.pdb"),
+            os.path.join(base_dir, "data", "structures", "targets", f"{target_part.lower()}.pdbqt")
         ]
         for pp in fallback_paths:
             if os.path.exists(pp):
-                with open(pp, "r") as f: protein_pdb = f.read()
+                with open(pp, "r") as f: 
+                    protein_pdb = f.read()
+                target_source_label = "Local File"
                 break
                 
     if not protein_pdb:
@@ -737,6 +786,8 @@ def main():
         st.session_state.disease_list = get_disease_list()
     if "selected_md_sim" not in st.session_state:
         st.session_state.selected_md_sim = None
+    if "active_target_name" not in st.session_state:
+        st.session_state.active_target_name = None
 
     # Render Chat HTML
     chat_html = ""
@@ -748,9 +799,11 @@ def main():
 
     # ── Fetch Data (disease-aware) ──────────────────────────────────
     active_disease = st.session_state.active_disease
+    active_target = st.session_state.active_target_name
     df, target_stats = load_data(
         disease_name=active_disease,
-        limit=st.session_state.candidates_limit
+        limit=st.session_state.candidates_limit,
+        target_name=active_target
     )
 
     # 기본 선택 후보 설정
@@ -760,8 +813,10 @@ def main():
     table_content = generate_table_html(df, selected_id=st.session_state.selected_id)
 
     # 3D / Insight 데이터
-    target_name, protein_pdb, ligand_pdbqt, num_poses, target_source_label = get_docking_data(
-        st.session_state.selected_id
+    target_name_result, protein_pdb, ligand_pdbqt, num_poses, target_source_label = get_docking_data(
+        st.session_state.selected_id,
+        disease_name=active_disease,
+        target_name=active_target
     )
     selected_score = None
     if not df.empty and st.session_state.selected_id:
@@ -795,8 +850,9 @@ def main():
         active_disease=active_disease or "",
         disease_list=st.session_state.disease_list,
         target_stats=target_stats,
+        active_target_name=active_target,
         # ── 3D / Insight ──
-        viewer_complex=f"{target_name} : {st.session_state.selected_id} Binding" if target_name else f"Analysis : {st.session_state.selected_id}",
+        viewer_complex=f"{target_name_result} : {st.session_state.selected_id} Binding" if target_name_result else f"Analysis : {st.session_state.selected_id}",
         viewer_source=f"[Source] {target_source_label}",
         viewer_ligand=f"Ligand {st.session_state.selected_id}",
         protein_pdb=protein_pdb,
@@ -828,12 +884,21 @@ def main():
             if action == "select_candidate":
                 st.session_state.selected_id = comp_value.get("id")
                 st.rerun()
+            elif action == "select_target":
+                new_target = comp_value.get("target_name")
+                if st.session_state.get("active_target_name") == new_target:
+                    st.session_state.active_target_name = None
+                else:
+                    st.session_state.active_target_name = new_target
+                st.session_state.selected_id = None
+                st.rerun()
             elif action == "select_disease":
                 disease_name = comp_value.get("disease_name", "")
                 st.session_state.active_disease = disease_name if disease_name else None
                 # 질환 변경 시 후보 선택 초기화
                 st.session_state.selected_id = None
                 st.session_state.selected_md_sim = None
+                st.session_state.active_target_name = None
                 st.session_state.candidates_limit = 4
                 print(f"[app] Active disease switched to: {disease_name}")
                 st.rerun()

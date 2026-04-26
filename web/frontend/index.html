@@ -288,14 +288,14 @@
 <div class="absolute top-4 left-4 z-10 flex flex-col gap-2">
 <div class="bg-background-dark/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700">
 <p id="viewer-source-label" class="text-[10px] text-slate-400 uppercase font-bold tracking-tighter text-blue-400 bg-blue-900/30 px-1 py-0.5 rounded inline-block">Current Complex</p>
-<p class="text-sm font-bold text-white">CHRNA1 : MG-003 Binding</p>
+<p id="viewer-complex-title" class="text-sm font-bold text-white">Awaiting Selection...</p>
 </div>
 <div class="flex gap-2">
 <div class="bg-slate-800/80 backdrop-blur-md px-2 py-1 rounded border border-slate-700 text-[10px] text-slate-300 flex items-center gap-1">
 <span class="w-2 h-2 rounded-full bg-primary"></span> Alpha Subunit
                         </div>
 <div class="bg-slate-800/80 backdrop-blur-md px-2 py-1 rounded border border-slate-700 text-[10px] text-slate-300 flex items-center gap-1">
-<span class="w-2 h-2 rounded-full bg-amber-400"></span> <span id="viewer-ligand-label">Ligand MG-003</span>
+<span class="w-2 h-2 rounded-full bg-amber-400"></span> <span id="viewer-ligand-label">Awaiting Selection...</span>
                         </div>
 </div>
 </div>
@@ -629,7 +629,7 @@
             }
         };
         const sendMessage = (type, data) => window.parent.postMessage({isStreamlitMessage: true, type, ...data}, "*");
-        const Streamlit = {
+        const Streamlit = window.Streamlit = {
             setComponentValue: (v) => sendMessage("streamlit:setComponentValue", {value: v}),
             setFrameHeight: (h) => sendMessage("streamlit:setFrameHeight", {height: h}),
             setComponentReady: () => sendMessage("streamlit:componentReady", {apiVersion: 1}),
@@ -697,8 +697,15 @@
                                         ? 'bg-amber-500/20 text-amber-400'
                                         : 'bg-slate-500/20 text-slate-400';
                                     const barCls = statusText === 'ACTIVE' ? 'bg-primary' : statusText === 'SCREENING' ? 'bg-amber-400' : 'bg-slate-600';
+                                    
+                                    const isActive = (args.active_target_name === t.gene_name);
+                                    const cardOuterCls = isActive 
+                                        ? 'bg-primary/10 border-primary hover:border-primary/80' 
+                                        : 'border-transparent hover:border-primary/30';
+                                        
                                     container.insertAdjacentHTML('beforeend', `
-                                    <div class="glass-panel rounded-lg px-3 py-2 flex flex-col gap-1 hover:border-primary/30 transition-colors">
+                                    <div class="glass-panel border rounded-lg px-3 py-2 flex flex-col gap-1 transition-colors cursor-pointer ${cardOuterCls}"
+                                         onclick="window.Streamlit.setComponentValue({action: 'select_target', target_name: '${t.gene_name}', ts: Date.now()})">
                                         <div class="flex justify-between items-center">
                                             <p class="text-xs font-bold text-slate-100">${t.gene_name}</p>
                                             <span class="px-1.5 py-0.5 rounded text-[9px] font-bold ${statusCls}">${statusText}</span>
@@ -715,10 +722,10 @@
                             }
                             // MD 모달 타겟 버튼도 동적 업데이트
                             const simBtns = el('sim-target-buttons');
-                            if (simBtns) {
+                            if (simBtns && args.target_stats) {
                                 simBtns.innerHTML = '';
-                                window._currentTargets = args.target_stats.map(t => t.gene_name);
-                                args.target_stats.forEach((t, i) => {
+                                window._currentTargets = (args.target_stats || []).map(t => t.gene_name);
+                                (args.target_stats || []).forEach((t, i) => {
                                     const isFirst = i === 0;
                                     simBtns.insertAdjacentHTML('beforeend', `
                                     <button data-target="${t.gene_name}"
@@ -892,12 +899,12 @@
             const el = (id) => document.getElementById(id);
             
             // 1. Dashboard Actions
-            if(el('btn-view-all')) el('btn-view-all').onclick = () => Streamlit.setComponentValue({action: 'view_all_candidates', ts: Date.now()});
+            if(el('btn-view-all')) el('btn-view-all').onclick = () => window.Streamlit.setComponentValue({action: 'view_all_candidates', ts: Date.now()});
             if(el('btn-start-pipeline')) el('btn-start-pipeline').onclick = () => {
                 const disease = el('admin-disease-input') ? el('admin-disease-input').value : '';
                 const env = document.querySelector('input[name="exec_env"]:checked')?.value || 'colab';
                 if (!disease.trim()) { alert('질환명을 입력해 주세요.'); return; }
-                Streamlit.setComponentValue({action: 'start_pipeline', disease: disease, env: env, ts: Date.now()});
+                window.Streamlit.setComponentValue({action: 'start_pipeline', disease: disease, env: env, ts: Date.now()});
                 if (env === 'colab') {
                     alert(`Google Colab 브라우저 창을 엽니다. 파이프라인을 실행해 주세요.`);
                 } else {
