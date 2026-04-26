@@ -685,7 +685,7 @@ def get_insight_data(chembl_id, vina_score=None):
 
 def generate_table_html(df, selected_id=None):
     if df.empty:
-        return "<tr><td colspan='4' class='px-4 py-4 text-xs text-slate-400 text-center'>Awaiting docking results...</td></tr>"
+        return "<tr><td colspan='5' class='px-4 py-4 text-xs text-slate-400 text-center'>Awaiting docking results...</td></tr>"
     
     html_rows = ""
     for idx, row in df.iterrows():
@@ -696,13 +696,19 @@ def generate_table_html(df, selected_id=None):
         is_selected = (row['chembl_id'] == selected_id)
         tr_class = 'class="bg-primary/20 border-l-4 border-primary cursor-pointer"' if is_selected else 'class="hover:bg-slate-700/30 cursor-pointer"'
         id_color = 'text-primary font-bold' if is_selected else 'text-slate-300'
+        name_val = row['compound_name'] if 'compound_name' in row and row['compound_name'] else "Unknown"
         
         mech_text = "Agonist" if idx % 2 == 0 else "Antag."
         mech_class = "text-primary bg-primary/10" if mech_text == "Agonist" else "text-slate-400 bg-slate-700"
         
         html_rows += f"""
         <tr {tr_class} data-id="{row['chembl_id']}">
-            <td class="px-4 py-4 text-xs font-mono {id_color}">{row['chembl_id']}</td>
+            <td class="px-4 py-4">
+                <div class="flex flex-col">
+                    <span class="text-xs font-mono {id_color}">{row['chembl_id']}</span>
+                    <span class="text-[10px] text-slate-400 truncate max-w-[100px]">{name_val}</span>
+                </div>
+            </td>
             <td class="px-4 py-4 text-xs text-slate-300">{score_val:.1f}</td>
             <td class="px-4 py-4">
                 <div class="flex items-center gap-2">
