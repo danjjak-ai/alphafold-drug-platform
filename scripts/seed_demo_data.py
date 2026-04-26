@@ -41,6 +41,11 @@ DEMO_TARGETS = [
 ]
 
 def seed(db_path: str):
+    # Ensure clean start by removing existing DB
+    if os.path.exists(db_path):
+        print(f"[seed] Removing existing database at {db_path} for clean deployment.")
+        os.remove(db_path)
+
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()

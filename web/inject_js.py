@@ -83,6 +83,7 @@ content = content.replace('href="#">Dashboard</a>', 'id="nav-dashboard" href="ja
 content = content.replace('href="#">Molecular Dynamics</a>', 'id="nav-dynamics" href="javascript:showPage(\'dynamics\')">Molecular Dynamics</a>')
 content = content.replace('href="#">Library</a>', 'id="nav-library" href="javascript:showPage(\'library\')">Library</a>')
 content = content.replace('href="#">Simulations</a>', 'id="nav-simulations" href="javascript:showPage(\'simulations\')">Simulations</a>')
+content = content.replace('href="#">Admin</a>', 'id="nav-admin" href="javascript:showPage(\'admin\')">Admin</a>')
 
 # 3) Body Skeleton Pages (Dynamics, Library, Simulations)
 skeleton_pages = """
@@ -155,7 +156,7 @@ skeleton_pages = """
                 <thead class="bg-slate-800/50 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                     <tr>
                         <th class="px-4 py-3">ChEMBL ID</th>
-                        <th class="px-4 py-3">Common Name</th>
+                        <th class="px-4 py-3">Drug Name</th>
                         <th class="px-4 py-3 text-center">MW</th>
                         <th class="px-4 py-3 text-center">LogP</th>
                         <th class="px-4 py-3">Status</th>
@@ -178,6 +179,68 @@ skeleton_pages = """
         </div>
         <div id="simulations-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <!-- Simulations Data Injected Here -->
+        </div>
+    </div>
+</div>
+
+<div id="page-admin" class="flex-1 hidden flex-col p-6 animate-in slide-in-from-bottom-4 duration-500 overflow-y-auto custom-scrollbar">
+    <div class="flex flex-col gap-6 w-full max-w-4xl mx-auto">
+        <div>
+            <h2 class="text-2xl font-bold text-slate-100">Admin Panel</h2>
+            <p class="text-xs text-slate-500">Pipeline Execution Configuration</p>
+        </div>
+
+        <!-- Registered Diseases -->
+        <div class="glass-panel rounded-2xl p-6 flex flex-col gap-4 border border-slate-700/50">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-slate-300 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-base">biotech</span>
+                    Registered Diseases
+                </h3>
+                <span class="text-[10px] text-slate-500">Click to switch active disease</span>
+            </div>
+            <div id="admin-disease-list" class="flex flex-wrap gap-2 min-h-[36px]">
+                <p class="text-[11px] text-slate-500 italic">No diseases registered yet. Initialize a pipeline below.</p>
+            </div>
+        </div>
+        <div class="glass-panel rounded-2xl p-6 flex flex-col gap-6 border border-slate-700/50">
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-bold text-slate-300">Target Disease</label>
+                <div class="flex gap-2">
+                    <input id="admin-disease-input" type="text" placeholder="e.g., 중증근무력증, Alzheimer" class="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-primary w-full max-w-md">
+                    <button id="btn-search-disease" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs font-bold transition-colors">Find Exact Terms</button>
+                </div>
+                <div id="disease-suggestions" class="flex flex-wrap gap-2 mt-2 hidden">
+                    <!-- Suggested terms will be injected here -->
+                </div>
+            </div>
+            
+            <div class="flex flex-col gap-2 mt-2">
+                <label class="text-sm font-bold text-slate-300">Pipeline Execution Environment</label>
+                <div class="flex gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer p-3 border border-primary bg-primary/10 rounded-lg flex-1">
+                        <input type="radio" name="exec_env" value="colab" class="text-primary focus:ring-primary bg-slate-800 border-slate-600" checked>
+                        <div>
+                            <p class="text-sm font-bold text-slate-200">Google Colab (Recommended)</p>
+                            <p class="text-[10px] text-slate-400">Uses cloud GPU for heavy docking and AI models.</p>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer p-3 border border-slate-700 bg-slate-800/30 rounded-lg flex-1 hover:bg-slate-800/50">
+                        <input type="radio" name="exec_env" value="local" class="text-primary focus:ring-primary bg-slate-800 border-slate-600">
+                        <div>
+                            <p class="text-sm font-bold text-slate-200">Local PC</p>
+                            <p class="text-[10px] text-slate-400">Runs locally. Requires powerful GPU.</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-700/50 flex justify-end">
+                <button id="btn-start-pipeline" class="px-6 py-2 rounded-xl bg-primary shadow-lg shadow-primary/20 text-white text-sm font-bold hover:scale-105 transition-transform flex items-center gap-2">
+                    <span class="material-symbols-outlined">play_circle</span>
+                    Initialize Pipeline
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -283,9 +346,15 @@ js_logic = """
 <script>
     // ── SPA Page Switcher ──────────────────────────────────────────
     window.showPage = function(pageId) {
-        const pages = ['page-dynamics', 'page-library', 'page-simulations'];
+        const pages = ['page-dynamics', 'page-library', 'page-simulations', 'page-admin'];
         const main = document.querySelector('main');
-        const navIds = { 'dashboard': 'nav-dashboard', 'dynamics': 'nav-dynamics', 'library': 'nav-library', 'simulations': 'nav-simulations' };
+        const navIds = { 
+            'dashboard': 'nav-dashboard', 
+            'dynamics': 'nav-dynamics', 
+            'library': 'nav-library', 
+            'simulations': 'nav-simulations',
+            'admin': 'nav-admin'
+        };
         if (pageId === 'dashboard') {
             if (main) main.style.display = '';
             pages.forEach(p => { const el2 = document.getElementById(p); if(el2) el2.style.display = 'none'; });
@@ -642,6 +711,29 @@ js_logic = """
                             ts: Date.now()
                         });
                     }, 500);
+                };
+            }
+
+            // 9. Admin Panel Logic
+            if(el('btn-search-disease')) el('btn-search-disease').onclick = () => {
+                const input = el('admin-disease-input');
+                if(input && input.value) Streamlit.setComponentValue({action: 'search_disease_terms', query: input.value, ts: Date.now()});
+            };
+            if(el('btn-start-pipeline')) el('btn-start-pipeline').onclick = () => {
+                const diseaseInput = el('admin-disease-input');
+                const env = document.querySelector('input[name="exec_env"]:checked').value;
+                Streamlit.setComponentValue({
+                    action: 'start_pipeline', 
+                    disease: diseaseInput ? diseaseInput.value : 'Custom Disease', 
+                    env: env,
+                    ts: Date.now()
+                });
+            };
+            // 10. Disease Selector
+            const dSel = el('disease-selector');
+            if (dSel) {
+                dSel.onchange = (e) => {
+                    Streamlit.setComponentValue({action: 'switch_disease', disease: e.target.value, ts: Date.now()});
                 };
             }
 
