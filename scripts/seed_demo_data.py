@@ -41,10 +41,10 @@ DEMO_TARGETS = [
 ]
 
 def seed(db_path: str):
-    # Ensure clean start by removing existing DB
+    # Preserve existing DB if it already exists (e.g. copied during build)
     if os.path.exists(db_path):
-        print(f"[seed] Removing existing database at {db_path} for clean deployment.")
-        os.remove(db_path)
+        print(f"[seed] Database already exists at {db_path}. Skipping seeding to preserve actual pipeline data.")
+        return
 
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
     conn = sqlite3.connect(db_path)

@@ -4,7 +4,8 @@ __pycache__
 *.pyc
 .ipynb_checkpoints
 data/raw
-results/docking/*.pdbqt
-data/structures/targets/*.pdb
+# Allow docking outputs and target structures to unify with local dashboard
+# results/docking/*.pdbqt
+# data/structures/targets/*.pdb
 !data/structures/targets/7ql6_raw.pdb
 !data/structures/targets/8s9p_raw.pdb
